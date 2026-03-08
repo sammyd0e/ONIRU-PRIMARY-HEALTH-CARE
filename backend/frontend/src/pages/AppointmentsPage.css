@@ -1,0 +1,116 @@
+.appointments-page .appointments-list {
+  background: rgb(233, 232, 232);
+  border-radius: 8px;
+  padding: 20px;
+  max-width: 840px;
+  margin: 24px auto;
+  box-shadow: 0 6px 18px rgba(22, 39, 75, 0.06);
+}
+.general{
+  color: #2c26dc;
+  background: #fef2f2;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  border: 1.5px solid #fecaca;
+  font-size: 1.09em;
+  font-style: italic;
+  justify-content: center;
+}
+.generall{
+  color: gray;
+  border-radius: 6px;
+  padding: 10px 14px;
+  margin-bottom: 16px;
+  font-size: 1.19em;
+  font-style: italic;
+  text-align: center;
+}
+.generalll{
+  color: #000000;
+  padding: 30px;
+  font-size: 2.19em;
+  font-style: italic;
+  text-align: center;
+}
+
+.appointments-list h2 {
+  margin-top: 0;
+  color: #000000;
+  font-size: 1.3rem;
+}
+.appointments-list p {
+  color: #ac0000;
+}
+
+.appointments-list ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.appointment-item {
+  color: #eef2f6;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
+  border-bottom: 1px solid #eef2f6;
+  transition: background 0.2s;
+}
+.appointment-item:last-child {
+  border-bottom: none;
+}
+.appointment-item:hover {
+  background: black;
+}
+.appointment-item .left {
+  flex: 1;
+}
+.appointment-item .meta {
+  color: #000000;
+  font-size: 0.95em;
+  margin-top: 2px;
+}
+.appointment-item .right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.appointment-item .status {
+  font-size: 0.95em;
+  color: #2563eb;
+  font-weight: 600;
+}
+.appointment-item .amount {
+  color: #059669;
+  font-weight: 600;
+}
+.muted {
+  color: red;
+  
+}
+
+
+/* .try{
+  font-family: "Ysabeau Office", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 500;
+  font-style: normal;
+  color: black;
+  text-align: center;
+  background-color: #0494fa;
+} */
+.about-us-page{
+   font-family: "Ysabeau Office", sans-serif;
+   font-optical-sizing: auto; 
+  font-weight: 500;
+  font-style: normal;
+  color: black;
+  text-align: center;
+  background-color: #0494fa;
+}
+.about{
+  margin-top: 50px;
+}

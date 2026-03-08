@@ -1,0 +1,46 @@
+.appointment-billboard {
+  background: #00080f;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.08);
+  padding: 32px 24px;
+  margin-bottom: 32px;
+}
+.billboard-title {
+  font-size: 1.6rem;
+  color: #0e7490;
+  margin-bottom: 18px;
+  font-weight: 600;
+}
+.billboard-section {
+  margin-bottom: 24px;
+  padding: 16px;
+  background: #050000;
+  border-radius: 8px;
+  box-shadow: 0 1px 6px rgba(14,116,144,0.07);
+}
+.billboard-section-title {
+  font-size: 1.2rem;
+  color: #334155;
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.billboard-row {
+  display: flex;
+  gap: 18px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+  font-size: 1rem;
+}
+.billboard-row:last-child {
+  border-bottom: none;
+}
+.billboard-empty {
+  color: #64748b;
+  font-style: italic;
+  padding: 8px 0;
+}
+.billboard-loading, .billboard-error {
+  color: #0e7490;
+  font-weight: 500;
+  padding: 16px;
+}

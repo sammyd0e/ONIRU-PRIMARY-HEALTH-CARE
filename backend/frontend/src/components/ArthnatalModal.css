@@ -1,0 +1,116 @@
+.arthnatal-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100vw;
+  height: 100vh;
+  overflow-y: auto;
+
+  
+}
+.arthnatal-modal {
+  background: #fff;
+  border-radius: 1.2rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+  padding: 2.5rem 2rem 1.5rem 2rem;
+  min-width: 320px;
+  max-width: 95vw;
+  width: 100%;
+  max-width: 480px;
+  position: relative;
+  animation: popIn 0.2s cubic-bezier(.4,2,.6,1) 1;
+  box-sizing: border-box;
+}
+@keyframes popIn {
+  from { transform: scale(0.95) translateY(30px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+.arthnatal-modal h3 {
+  margin-top: 0;
+  margin-bottom: 1.2rem;
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #2a2a2a;
+}
+.arthnatal-modal .row {
+  margin-bottom: 1rem;
+  display: flex;
+  flex-direction: column;
+}
+.arthnatal-modal label {
+  font-size: 0.98rem;
+  margin-bottom: 0.3rem;
+  color: #444;
+}
+.arthnatal-modal input,
+.arthnatal-modal textarea {
+  border: 1px solid #d0d0d0;
+  border-radius: 0.5rem;
+  padding: 0.6rem 0.8rem;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+.arthnatal-modal input:focus,
+.arthnatal-modal textarea:focus {
+  border-color: #4e8cff;
+}
+.arthnatal-modal textarea {
+  resize: vertical;
+}
+.arthnatal-modal .actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 1.2rem;
+}
+.arthnatal-btn {
+  padding: 0.6rem 1.3rem;
+  border-radius: 0.5rem;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s;
+}
+.arthnatal-btn.primary {
+  background: #4e8cff;
+  color: #fff;
+}
+.arthnatal-btn.primary:disabled {
+  background: #b3d1ff;
+  cursor: not-allowed;
+}
+ .arthnatal-btn.ghost {
+  background: #f3f6fa;
+  color: #444;
+}
+@media (max-width: 600px) {
+  .arthnatal-modal-backdrop {
+    align-items: flex-start;
+    padding: 0;
+  }
+  .arthnatal-modal {
+    min-width: unset;
+    max-width: 100vw;
+    width: 100vw;
+    border-radius: 0;
+    padding: 1.2rem 0.5rem 1rem 0.5rem;
+    margin: 0;
+    height: 100vh;
+    max-height: 100vh;
+    overflow-y: auto;
+  }
+}
+.arthnatal-modal .success {
+  color: #388e3c;
+  font-size: 0.98em;
+}
+.arthnatal-modal .success {
+  color: #388e3c;
+  font-size: 0.98em;
+}
