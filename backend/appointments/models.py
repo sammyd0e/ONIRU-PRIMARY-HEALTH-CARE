@@ -63,27 +63,21 @@ class Appointment(models.Model):
     management command `copy_orders_to_appointments`.
     """
 
+
     order_number = models.CharField(max_length=128, unique=True)
     patient = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='appointments')
+    # New: link to child account if appointment is for a child
+    child_account = models.ForeignKey('users.ChildAccount', on_delete=models.SET_NULL, null=True, blank=True, related_name='appointments_as_child')
     status = models.CharField(max_length=64, db_index=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-    # Store the patient's clinic ID (redundant but useful when appointments are created
-    # by third parties or by reference). This is optional and used for lookup/display.
     clinic_id = models.CharField(max_length=12, blank=True, null=True, db_index=True)
-    # scheduled date/time chosen by patient
     scheduled_date = models.DateField(null=True, blank=True, db_index=True)
     scheduled_time = models.TimeField(null=True, blank=True)
-
-    # Optionally assign a doctor (stored as a FK to the user table). Doctors
-    # can be created separately and associated with a clinic_id.
     doctor = models.ForeignKey(
         'users.User', null=True, blank=True, on_delete=models.SET_NULL,
         related_name='appointments_as_doctor'
     )
-
-    # optional free-form note or reason for visit
     note = models.TextField(blank=True, null=True)
-
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(default=timezone.now, null=False)
 

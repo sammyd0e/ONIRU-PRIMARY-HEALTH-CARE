@@ -39,10 +39,11 @@ class AppointmentSerializer(serializers.ModelSerializer):
     order_number = serializers.CharField(required=False, allow_blank=True)
     status = serializers.CharField(required=False, allow_blank=True)
 
+
     class Meta:
         model = Appointment
         fields = [
-            'id', 'order_number', 'patient', 'patient_full_name', 'status', 'total_amount',
+            'id', 'order_number', 'patient', 'patient_full_name', 'child_account', 'status', 'total_amount',
             'scheduled_date', 'scheduled_time', 'doctor', 'note', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'patient']
@@ -54,13 +55,14 @@ class AppointmentSerializer(serializers.ModelSerializer):
             validated_data.pop(field, None)
 
         doctor = validated_data.pop('doctor', None)
+        child_account = validated_data.pop('child_account', None)
         # Set patient from request.user
         patient = None
         if request and hasattr(request, 'user'):
             patient = request.user
         if doctor is not None:
-            appointment = Appointment(doctor=doctor, patient=patient, **validated_data)
+            appointment = Appointment(doctor=doctor, patient=patient, child_account=child_account, **validated_data)
         else:
-            appointment = Appointment(patient=patient, **validated_data)
+            appointment = Appointment(patient=patient, child_account=child_account, **validated_data)
         appointment.save()
         return appointment

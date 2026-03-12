@@ -171,11 +171,17 @@ export default function BookingModal({ open, service, onClose, onBooked, hasPend
   const errors = validate();
   return (
     <div className="sb-modal-backdrop" role="dialog" aria-modal="true">
-      <form className="sb-modal" onSubmit={submit} noValidate>
-        <h3 style={{display:'flex',alignItems:'center',gap:8}}>
-          <span role="img" aria-label="calendar">📅</span> Book Appointment
-        </h3>
-        <p className="muted">Fill in the details below to book your appointment.</p>
+      <form className="sb-modal sb-modal-enhanced" onSubmit={submit} noValidate>
+        <div className="modal-header">
+          <div className="modal-icon">
+            <span role="img" aria-label="calendar" style={{fontSize:'2rem'}}>📅</span>
+          </div>
+          <div>
+            <h3 style={{marginBottom:4}}>Book Appointment</h3>
+            <p className="muted" style={{marginBottom:0}}>Fill in the details below to book your appointment.</p>
+          </div>
+        </div>
+        <hr className="modal-divider" />
         <div className="form-section">
           <div className="row">
             <label htmlFor="sb-clinic">Clinic ID <span className="required">*</span></label>

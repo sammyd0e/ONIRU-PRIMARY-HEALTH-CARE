@@ -1,3 +1,85 @@
+/* Floating AI Health Assistant Widget */
+.ai-assistant-floating {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1200;
+  width: 320px;
+  max-width: 90vw;
+  min-width: 180px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(14,116,144,0.18);
+  border: 1px solid #bae6fd;
+  padding: 8px 0 8px 0;
+  transition: box-shadow 0.2s, width 0.2s;
+  cursor: grab;
+  user-select: none;
+}
+.ai-assistant-floating:active {
+  cursor: grabbing;
+}
+@media (max-width: 600px) {
+  .ai-assistant-floating {
+    width: 98vw;
+    right: 1vw;
+    bottom: 8px;
+    border-radius: 8px;
+    padding: 4px 0;
+  }
+}
+/* Extra mobile polish and accessibility */
+@media (max-width: 480px) {
+  .profile-page .profile-card {
+    padding: 2vw 0.5vw;
+    font-size: 15px;
+  }
+  .profile-header h2 {
+    font-size: 20px;
+  }
+  .profile-section, .child-card, .modal-content {
+    padding: 8px 2vw;
+    font-size: 15px;
+  }
+  .btn, .btn-ghost {
+    font-size: 16px;
+    padding: 12px 0;
+    width: 100%;
+    margin-bottom: 8px;
+  }
+  .profile-row {
+    font-size: 15px;
+    padding: 4px 0;
+  }
+  .appointments-list, .diagnosis-list, .arthnatal-list {
+    font-size: 15px;
+  }
+  .appointment-item, .diagnosis-item, .arthnatal-item {
+    padding: 8px 2px;
+    font-size: 15px;
+  }
+  .child-list {
+    gap: 6px;
+  }
+}
+
+/* Improve focus states for accessibility */
+.btn:focus, .btn-ghost:focus {
+  outline: 2px solid #0ea5e9;
+  outline-offset: 2px;
+}
+
+/* Hide scrollbars on child list for mobile */
+@media (max-width: 600px) {
+  .child-list {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .child-list::-webkit-scrollbar {
+    display: none;
+  }
+}
 .profile-page .profile-card {
   background: #fff;
   border-radius: 8px;
@@ -5,13 +87,43 @@
   max-width: 840px;
   margin: 24px auto;
   box-shadow: 0 6px 18px rgba(22, 39, 75, 0.06);
+  transition: box-shadow 0.2s;
+  border: 1px solid #e5e7eb;
 }
+
+@media (max-width: 900px) {
+  .profile-page .profile-card {
+    max-width: 98vw;
+    margin: 12px 1vw;
+    padding: 12px;
+  }
+}
+
+@media (max-width: 600px) {
+  .profile-page .profile-card {
+    padding: 6vw 2vw;
+    border-radius: 0;
+    box-shadow: none;
+    margin: 0;
+    max-width: 100vw;
+  }
+}
+
 
 .profile-header {
   display: flex;
   gap: 16px;
   align-items: center;
   margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .profile-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
 }
 
 .avatar {
@@ -23,29 +135,56 @@
   justify-content: center;
   background: linear-gradient(135deg,#e6f3ff,#f6fbff);
   font-size: 28px;
+  box-shadow: 0 2px 8px rgba(14,116,144,0.08);
+  border: 2px solid #bae6fd;
 }
 
 .profile-section {
   margin-top: 18px;
   border-top: 1px solid #eef2f6;
   padding-top: 12px;
+  background: #f8fafc;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  box-shadow: 0 1px 4px rgba(22,39,75,0.03);
+}
+
+@media (max-width: 600px) {
+  .profile-section {
+    padding: 10px 2vw;
+    border-radius: 0;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    box-shadow: none;
+    color: #000000;
+  }
 }
 
 .profile-row {
   display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 8px 16px;
+  grid-template-columns: 160px 1fr;
+  gap: 8px 12px;
   padding: 8px 0;
   align-items: center;
+}
+
+@media (max-width: 600px) {
+  .profile-row {
+    grid-template-columns: 1fr;
+    gap: 4px 0;
+    padding: 6px 0;
+  }
 }
 
 .profile-label {
   color: #545c66;
   font-weight: 600;
+  font-size: 15px;
 }
 
 .profile-value {
   color: #111827;
+  font-size: 15px;
 }
 
 .profile-actions {
@@ -53,8 +192,127 @@
   gap: 12px;
   margin-top: 18px;
   justify-content: flex-end;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .profile-actions {
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 12px;
+    align-items: stretch;
+  }
 }
 
 .muted {
   color: #6b7280;
 }
+
+.child-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+}
+
+.child-card {
+  flex: 1 1 320px;
+  min-width: 260px;
+  max-width: 420px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(22,39,75,0.06);
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+  margin-bottom: 8px;
+  transition: box-shadow 0.2s;
+}
+
+.child-card:hover {
+  box-shadow: 0 6px 18px rgba(14,116,144,0.10);
+  border-color: #38bdf8;
+}
+
+@media (max-width: 900px) {
+  .child-list {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .child-card {
+    max-width: 98vw;
+    min-width: 0;
+    padding: 10px 2vw;
+  }
+}
+
+.appointments-list, .diagnosis-list, .arthnatal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.appointment-item, .diagnosis-item, .arthnatal-item {
+  background: #000000;
+  border-radius: 6px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  box-shadow: 0 1px 3px rgba(22,39,75,0.04);
+  border: 1px solid #e0e7ef;
+}
+
+@media (max-width: 600px) {
+  .appointment-item, .diagnosis-item, .arthnatal-item {
+    padding: 8px 4px;
+    font-size: 15px;
+  }
+}
+
+.btn {
+  background: linear-gradient(90deg,#0ea5e9,#38bdf8);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(14,116,144,0.08);
+}
+.btn:hover {
+  background: linear-gradient(90deg,#38bdf8,#0ea5e9);
+  box-shadow: 0 2px 8px rgba(14,116,144,0.12);
+}
+.btn-ghost {
+  background: transparent;
+  color: #0ea5e9;
+  border: 1px solid #bae6fd;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 18px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.btn-ghost:hover {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.modal-overlay {
+  background: rgba(0,0,0,0.3);
+  z-index: 1000;
+}
+.modal-content {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 24px rgba(22,39,75,0.18);
+  padding: 24px;
+  min-width: 320px;
+  max-width: 400px;
+}
+@media (max-width: 600px) {
+  .modal-content {
+    min-width: 0;
+    max-width: 98vw;
+    padding: 12px 2vw;
+  }
+}
+

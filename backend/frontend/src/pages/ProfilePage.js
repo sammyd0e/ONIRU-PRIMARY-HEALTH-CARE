@@ -10,6 +10,11 @@ import './ProfilePage.css';
 import SymptomChatbot from '../components/SymptomChatbot';
 
 export default function ProfilePage() {
+    // Debug: Show access token status
+    const accessToken = window.localStorage.getItem('access');
+    console.log('[DEBUG] Access token:', accessToken);
+    // Show a visible warning if the access token is missing or looks invalid
+    const isTokenMissing = !accessToken || accessToken.length < 10;
   // --- All hooks must be at the top ---
   // State for diagnoses and test results
   const [diagnosisData, setDiagnosisData] = useState([]);
@@ -101,30 +106,52 @@ export default function ProfilePage() {
 
   // Child appointment form component
   function ChildAppointmentForm({ child, onClose }) {
+
     const [date, setDate] = React.useState('');
     const [time, setTime] = React.useState('');
     const [reason, setReason] = React.useState('');
     const [statusMsg, setStatusMsg] = React.useState('');
     const [loading, setLoading] = React.useState(false);
+    // Import createAppointment from api
+    const { createAppointment } = require('../api');
 
     const handleSubmit = async e => {
       e.preventDefault();
       setLoading(true);
       setStatusMsg('');
       try {
-        const res = setAppointments({
+        const payload = {
           child_account: child.id,
-          appointment_date: date,
-          appointment_time: time,
-          reason,
-        });
+          scheduled_date: date,
+          scheduled_time: time,
+          note: reason,
+        };
+        console.log('[DEBUG] Creating appointment for child_account:', child.id, payload);
+        const res = await createAppointment(payload);
         if (res.ok) {
           setStatusMsg('Appointment created successfully!');
           setDate('');
           setTime('');
           setReason('');
+          // Refresh child appointments after creation
+          if (typeof window.fetchAppointmentsWithChild === 'function') {
+            window.fetchAppointmentsWithChild(child.id);
+          }
+          if (typeof window.refreshChildAppointments === 'function') {
+            window.refreshChildAppointments();
+          }
+          // Or trigger a custom event for parent to listen
+          if (typeof window.dispatchEvent === 'function') {
+            window.dispatchEvent(new CustomEvent('childAppointmentCreated', { detail: { childId: child.id } }));
+          }
         } else {
-          setStatusMsg('Failed to create appointment.');
+          // Show backend error message if available
+          let errorMsg = 'Failed to create appointment.';
+          if (res.body && typeof res.body === 'object') {
+            // If DRF returns a dict of errors, join them
+            errorMsg += ' ' + Object.entries(res.body).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : v}`).join(' | ');
+          }
+          setStatusMsg(errorMsg);
         }
       } catch (err) {
         setStatusMsg('Error creating appointment.');
@@ -153,6 +180,48 @@ export default function ProfilePage() {
     );
   }
 
+  // Fetch child appointments for each child
+  const [childAppointments, setChildAppointments] = React.useState({});
+  React.useEffect(() => {
+    if (!children || children.length === 0) return;
+    let mounted = true;
+    const fetchAll = async () => {
+      const results = {};
+      for (const child of children) {
+        try {
+          console.log('[DEBUG] Fetching appointments for child_account:', child.id);
+          const data = await fetchAppointmentsWithChild(child.id);
+          results[child.id] = Array.isArray(data) ? data : [];
+        } catch {
+          results[child.id] = [];
+        }
+      }
+      if (mounted) setChildAppointments(results);
+    };
+    // Expose refresh function globally for debugging/refresh after creation
+    window.refreshChildAppointments = fetchAll;
+    fetchAll();
+    // Listen for custom event to refresh after appointment creation
+    const handler = (e) => {
+      if (e.detail && e.detail.childId) {
+        fetchAll();
+      }
+    };
+    window.addEventListener('childAppointmentCreated', handler);
+    return () => { mounted = false; window.removeEventListener('childAppointmentCreated', handler); };
+  }, [children]);
+
+  // Helper to fetch appointments for a child
+  async function fetchAppointmentsWithChild(childId) {
+    console.log('[DEBUG] fetchAppointmentsWithChild called with childId:', childId);
+    const res = await fetch(`${process.env.REACT_APP_API_BASE || ''}/api/appointments/?child_account=${childId}`, {
+      headers: { 'Content-Type': 'application/json', ...(window.localStorage.getItem('access') ? { Authorization: `Bearer ${window.localStorage.getItem('access')}` } : {}) },
+    });
+    const data = await res.json();
+    console.log('[DEBUG] Appointments fetched for child_account', childId, data);
+    return data;
+  }
+
   // Render child info section
   const ChildInfoSection = () => (
     <section className="profile-section">
@@ -170,6 +239,33 @@ export default function ProfilePage() {
               <Row label="State of Origin" value={child.child_profile?.stateOfOrigin} />
               <Row label="Clinic ID" value={child.child_profile?.clinicId} />
               <button className="btn" style={{marginTop:12}} onClick={() => handleOpenAppointmentModal(child)}>Create Appointment for Child</button>
+              {/* Child appointments */}
+              <div style={{marginTop:20, borderTop:'1px solid #e5e7eb', paddingTop:12}}>
+                <h4 style={{marginBottom:8, color:'#0e7490', fontWeight:700, fontSize:17}}>Child Appointments</h4>
+                {childAppointments[child.id] && childAppointments[child.id].detail === 'Authentication credentials were not provided.' ? (
+                  <div className="muted" style={{color:'#b91c1c'}}>You are not logged in. Please sign in to view appointments.</div>
+                ) : childAppointments[child.id] && childAppointments[child.id].length > 0 ? (
+                  <ul className="appointments-list">
+                    {childAppointments[child.id].map((item, i) => (
+                      <li key={item.id || i} className="appointment-item">
+                        <div style={{fontWeight:600, fontSize:16, color:'#0369a1'}}>{item.service_id || 'Service'}</div>
+                        <div style={{fontSize:15, margin:'4px 0'}}>
+                          <span style={{fontWeight:500}}>{item.scheduled_date ? new Date(item.scheduled_date).toLocaleDateString() : 'No date'}</span> {item.scheduled_time || ''}
+                        </div>
+                        <div style={{fontSize:14, marginTop:2}}><b>Status:</b> {item.status}</div>
+                        {item.doctor && <div style={{fontSize:14, marginTop:2}}><b>Doctor:</b> {item.doctor}</div>}
+                        {item.note && <div style={{fontSize:14, marginTop:2}}><b>Note:</b> {item.note}</div>}
+                        {item.total_amount && <div style={{fontSize:14, marginTop:2}}><b>Total Amount:</b> {item.total_amount}</div>}
+                        {item.order_number && <div style={{fontSize:14, marginTop:2}}><b>Order #:</b> {item.order_number}</div>}
+                        {item.created_at && <div className="muted" style={{fontSize:12}}>Booked: {new Date(item.created_at).toLocaleString()}</div>}
+                        {item.updated_at && <div className="muted" style={{fontSize:12}}>Updated: {new Date(item.updated_at).toLocaleString()}</div>}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="muted">No appointments yet. Click "Create Appointment for Child" to book one.</div>
+                )}
+              </div>
             </div>
           ))}
         </div>
@@ -354,6 +450,12 @@ export default function ProfilePage() {
 
   return (
     <div className="profile-page container">
+      {isTokenMissing && (
+        <div style={{background:'#fee2e2',color:'#b91c1c',padding:12,borderRadius:8,marginBottom:16,border:'1px solid #fca5a5'}}>
+          <b>Warning:</b> You are not authenticated. Please log in to view appointments. <br/>
+          <span style={{fontSize:12}}>No valid access token found in localStorage.</span>
+        </div>
+      )}
       <div className="profile-card">
   
 
@@ -494,11 +596,101 @@ export default function ProfilePage() {
         </footer>
       </div>
 
-      {/* AI Symptom Chatbot */}
-      <SymptomChatbot />
+      {/* Floating AI Symptom Chatbot */}
+      <FloatingSymptomChatbot />
     </div>
   );
+
+  // Floating, moveable AI Health Assistant widget
+  function FloatingSymptomChatbot() {
+    const [pos, setPos] = React.useState(() => {
+      // Try to restore from localStorage
+      const saved = localStorage.getItem('aiAssistantPos');
+      return saved ? JSON.parse(saved) : { x: window.innerWidth - 340, y: window.innerHeight - 180 };
+    });
+    const [dragging, setDragging] = React.useState(false);
+    const [offset, setOffset] = React.useState({ x: 0, y: 0 });
+    const ref = React.useRef();
+
+    React.useEffect(() => {
+      function handleMouseMove(e) {
+        if (!dragging) return;
+        const newX = e.clientX - offset.x;
+        const newY = e.clientY - offset.y;
+        setPos({ x: Math.max(8, Math.min(newX, window.innerWidth - 180)), y: Math.max(8, Math.min(newY, window.innerHeight - 80)) });
+      }
+      function handleMouseUp() {
+        setDragging(false);
+        localStorage.setItem('aiAssistantPos', JSON.stringify(pos));
+      }
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        window.removeEventListener('mousemove', handleMouseMove);
+        window.removeEventListener('mouseup', handleMouseUp);
+      };
+    }, [dragging, offset, pos]);
+
+    // Touch support
+    React.useEffect(() => {
+      function handleTouchMove(e) {
+        if (!dragging) return;
+        if (e.touches && e.touches[0]) {
+          const newX = e.touches[0].clientX - offset.x;
+          const newY = e.touches[0].clientY - offset.y;
+          setPos({ x: Math.max(8, Math.min(newX, window.innerWidth - 180)), y: Math.max(8, Math.min(newY, window.innerHeight - 80)) });
+        }
+      }
+      function handleTouchEnd() {
+        setDragging(false);
+        localStorage.setItem('aiAssistantPos', JSON.stringify(pos));
+      }
+      window.addEventListener('touchmove', handleTouchMove);
+      window.addEventListener('touchend', handleTouchEnd);
+      return () => {
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchend', handleTouchEnd);
+      };
+    }, [dragging, offset, pos]);
+
+    // Responsive width for mobile
+    const widgetWidth = window.innerWidth < 500 ? '180px' : '260px';
+
+    return (
+      <div
+        className="ai-assistant-floating"
+        ref={ref}
+        style={{
+          position: 'fixed',
+          left: pos.x,
+          top: pos.y,
+          width: widgetWidth,
+          minWidth: '120px',
+          maxWidth: '90vw',
+          zIndex: 1200,
+          cursor: dragging ? 'grabbing' : 'grab',
+          boxShadow: '0 6px 24px rgba(14,116,144,0.18)',
+          borderRadius: '12px',
+          padding: '4px 0',
+        }}
+        onMouseDown={e => {
+          setDragging(true);
+          setOffset({ x: e.clientX - pos.x, y: e.clientY - pos.y });
+          e.preventDefault();
+        }}
+        onTouchStart={e => {
+          if (e.touches && e.touches[0]) {
+            setDragging(true);
+            setOffset({ x: e.touches[0].clientX - pos.x, y: e.touches[0].clientY - pos.y });
+          }
+        }}
+      >
+        <SymptomChatbot />
+      </div>
+    );
+  }
 }
+
 
 
 function ClinicIdDisplay({ profile }) {

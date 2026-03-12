@@ -33,10 +33,12 @@ class AppointmentViewSet(viewsets.ModelViewSet):
     queryset = Appointment.objects.all()
 
     def get_queryset(self):
-        # Only return appointments for the authenticated user
+        # Only return appointments for the authenticated user or for their children
         user = self.request.user
         qs = Appointment.objects.filter(patient=user)
-
+        child_account_id = self.request.query_params.get('child_account')
+        if child_account_id:
+            qs = qs.filter(child_account_id=child_account_id)
         return qs
     serializer_class = AppointmentSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -49,6 +51,7 @@ class AppointmentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(upcoming_appointments, many=True)
         return Response(serializer.data)
     
+
     def perform_create(self, serializer):
         from datetime import time, timedelta, datetime
         save_kwargs = {'patient': self.request.user}
@@ -65,6 +68,11 @@ class AppointmentViewSet(viewsets.ModelViewSet):
             clinic_id = serializer.validated_data.get('clinic_id')
         if clinic_id:
             save_kwargs['clinic_id'] = clinic_id
+
+        # Attach child_account if provided
+        child_account = serializer.validated_data.get('child_account')
+        if child_account:
+            save_kwargs['child_account'] = child_account
 
         # default status
         if not serializer.validated_data.get('status'):
