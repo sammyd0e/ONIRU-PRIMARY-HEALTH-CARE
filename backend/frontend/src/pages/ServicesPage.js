@@ -13,13 +13,7 @@ const SERVICES = [
     description: 'Comprehensive antenatal care for expectant mothers — regular checkups, screening, counseling and birth planning.',
     cta: 'Book antenatal appointment',
   },
-  {
-    id: 'ilera-eko',
-    title: 'Ilera Eko',
-    duration: '30–45 min',
-    description: 'Our general outpatient service for acute and chronic care — diagnosis, treatment and referral when needed.',
-    cta: 'Book a consultation',
-  },
+ 
   {
     id: 'immunization',
     title: 'Immunization (age 0–5)',
@@ -28,18 +22,18 @@ const SERVICES = [
     cta: 'Schedule immunization',
   },
   {
-    id: 'vitals',
+    id: 'vitals and Laboratory Screening',
     title: 'Vitals & Screening',
     duration: '5–15 min',
     description: 'Quick vitals check (BP, pulse, temperature, weight) and basic screening to monitor health status.',
     cta: 'Check vitals',
   },
    {
-    id: 'Eye Clinic',
-    title: 'Eye Clinic',
+    id: 'Family Planning',
+    title: 'Family Planning',
     duration: '30–45 min',
-    description: 'Comprehensive eye care services including vision screening, eye exams and referrals for specialized care.',
-    cta: 'Book an eye exam',
+    description: 'Comprehensive family planning services including consultations, contraceptive counseling and reproductive health care.',
+    cta: 'Book a consultation',
   },
 ];
 
@@ -70,7 +64,7 @@ export default function ServicesPage() {
   }
 
   return (
-    <div class='ysabeau-office' className="services-page container">
+    <div className="services-page container">
       <header className="services-header">
         <div>
           <h1>Our Services</h1>
@@ -87,7 +81,7 @@ export default function ServicesPage() {
         </button>
       </div>
 
-      <section className="services-grid">
+      <section className="services-grid" id="services-section">
         {SERVICES.map(s => (
           <article key={s.id} className="service-card">
             <div className="service-card-head">

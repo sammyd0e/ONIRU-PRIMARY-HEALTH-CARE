@@ -1,5 +1,9 @@
 from django.contrib import admin
-from .models import Appointment, Diagnosis, TestResult
+from .models import Appointment, Diagnosis, TestResult, AttendedPatient
+# Register AttendedPatient for admin management
+@admin.register(AttendedPatient)
+class AttendedPatientAdmin(admin.ModelAdmin):
+    list_display = ('name', 'clinic_id', 'amount_paid', 'sex', 'attended_at')
 from .models_arthnatal import ArthnatalBooking
 
 @admin.register(Appointment)

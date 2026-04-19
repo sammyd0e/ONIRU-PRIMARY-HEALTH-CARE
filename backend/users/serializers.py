@@ -21,6 +21,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
 
 # Serializer for PatientProfile including vitals
 class PatientProfileSerializer(serializers.ModelSerializer):
+    profile_picture = serializers.ImageField(required=False, allow_null=True)
     bloodPressure = serializers.CharField(source='blood_pressure', allow_null=True, required=False)
     sugarLevel = serializers.CharField(source='sugar_level', allow_null=True, required=False)
     cholesterolLevel = serializers.CharField(source='cholesterol_level', allow_null=True, required=False)
@@ -38,6 +39,7 @@ class PatientProfileSerializer(serializers.ModelSerializer):
             'id', 'othername', 'first_name', 'last_name', 'sex', 'bloodGroup', 'dob',
             'stateOfOrigin', 'nextOfKin', 'houseAddress', 'clinicId',
             'bloodPressure', 'sugarLevel', 'cholesterolLevel', 'weight', 'height',
+            'profile_picture',
             'created_at', 'updated_at', 'user'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'user']

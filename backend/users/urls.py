@@ -1,10 +1,11 @@
 from django.urls import path
-from .views import MeView, ChildAccountCreateView, PatientProfileCreateView
-# from .views import ChildAppointmentCreateView
+from .views import MeView, ChildAccountCreateView, PatientProfileCreateView, SignupView, PatientProfileByClinicIdView, ProfilePictureUploadView
 
 urlpatterns = [
 	path('me/', MeView.as_view(), name='me-profile'),
     path('child-accounts/create/', ChildAccountCreateView.as_view(), name='child-account-create'),
     path('patient-profiles/', PatientProfileCreateView.as_view(), name='patient-profile-create'),
-#    path('child-appointments/create/', ChildAppointmentCreateView.as_view(), name='child-appointment-create'),
+    path('patient-profile-by-clinic-id/', PatientProfileByClinicIdView.as_view(), name='patient-profile-by-clinic-id'),
+    path('profile-picture/', ProfilePictureUploadView.as_view(), name='profile-picture-upload'),
+    path('signup/', SignupView.as_view(), name='signup'),
 ]

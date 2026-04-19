@@ -1,3 +1,46 @@
+from django.contrib.auth import get_user_model
+from rest_framework import generics
+from .serializers import SignupSerializer
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import render
+import logging
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
+from django.contrib.auth import get_user_model
+from .serializers import SignupSerializer, EmailTokenObtainPairSerializer
+from .models import PatientProfile
+from .serializers import PatientProfileSerializer
+from .models import ChildAccount
+from .serializers import ChildAccountSerializer
+import random
+import string
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import generics
+from .models import PatientProfile
+from .serializers import PatientProfileSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
+
+# Signup API view
+class SignupView(generics.GenericAPIView):
+	serializer_class = SignupSerializer
+	permission_classes = []
+
+	def post(self, request, *args, **kwargs):
+		serializer = self.get_serializer(data=request.data)
+		serializer.is_valid(raise_exception=True)
+		User = get_user_model()
+		user = User.objects.create_user(
+			email=serializer.validated_data['email'],
+			password=serializer.validated_data['password'],
+			first_name=serializer.validated_data.get('first_name', ''),
+			last_name=serializer.validated_data.get('last_name', ''),
+		)
+		# Optionally create PatientProfile or other related models here
+		return Response({'detail': 'User created successfully.'}, status=status.HTTP_201_CREATED)
  # from .serializers import ChildAppointmentSerializer
 # class ChildAppointmentCreateView(generics.CreateAPIView):
 # 	serializer_class = ChildAppointmentSerializer
@@ -26,6 +69,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework import generics
 from .models import PatientProfile
 from .serializers import PatientProfileSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 
 # API view for creating a child account
 class ChildAccountCreateView(generics.CreateAPIView):
@@ -254,6 +298,37 @@ class PatientProfileCreateView(generics.CreateAPIView):
 	def perform_create(self, serializer):
 		# Always create child patient profiles with user=None
 		serializer.save(user=None)
+
+class PatientProfileByClinicIdView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        clinic_id = request.GET.get('clinic_id')
+        if not clinic_id:
+            return Response({'error': 'clinic_id is required'}, status=400)
+        try:
+            profile = PatientProfile.objects.get(clinic_id=clinic_id)
+        except PatientProfile.DoesNotExist:
+            return Response({'error': 'Profile not found'}, status=404)
+        data = PatientProfileSerializer(profile).data
+        return Response({'profile': data})
+
+class ProfilePictureUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def patch(self, request, *args, **kwargs):
+        user = request.user
+        profile = getattr(user, 'patient_profile', None)
+        if not profile:
+            return Response({'error': 'No profile found.'}, status=404)
+        file = request.FILES.get('profile_picture')
+        if not file:
+            return Response({'error': 'No file uploaded.'}, status=400)
+        profile.profile_picture = file
+        profile.save()
+        from .serializers import PatientProfileSerializer
+        return Response({'profile_picture': PatientProfileSerializer(profile).data['profile_picture']})
 
 DEBUG = False
 ALLOWED_HOSTS = ['localhost', '127.0.0.1']

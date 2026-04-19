@@ -55,7 +55,7 @@ export default function AppointmentBillboard() {
   if (error) return <div className="billboard-error">{error}</div>;
 
   return (
-    <section className="appointment-billboard">
+    <section className="appointment-billboard" id="billboard-section">
       <h3 className="billboard-title">Upcoming Appointments Billboard</h3>
       <div className="billboard-section">
         <div className="billboard-section-title">All Upcoming Appointments</div>

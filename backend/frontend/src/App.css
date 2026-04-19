@@ -316,3 +316,20 @@
 }
 
 
+
+.oniru {
+  font-family: "Ysabeau Office", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 400;
+  font-style: normal;
+  color: #0f1724;
+}
+
+.ooniru {
+  font-family: "Ysabeau Office", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 700;
+  font-style: normal;
+  text-align: center;
+  color: #ffd323;
+}

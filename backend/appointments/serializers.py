@@ -1,3 +1,12 @@
+
+from rest_framework import serializers
+from .models import AttendedPatient
+
+# Serializer for AttendedPatient
+class AttendedPatientSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AttendedPatient
+        fields = ['id', 'name', 'clinic_id', 'amount_paid', 'sex', 'payment_method', 'payment_type', 'appointment_type', 'attended_at']
 from rest_framework import serializers
 from .models import Appointment, Doctor, Diagnosis, TestResult
 
@@ -44,6 +53,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
         model = Appointment
         fields = [
             'id', 'order_number', 'patient', 'patient_full_name', 'child_account', 'status', 'total_amount',
+            'clinic_id', 'appointment_type', 'payment_method',
             'scheduled_date', 'scheduled_time', 'doctor', 'note', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'created_at', 'updated_at', 'patient']

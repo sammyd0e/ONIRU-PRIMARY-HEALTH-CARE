@@ -1,3 +1,12 @@
+// Fetch a patient profile by clinic ID (for doctor lookup)
+export async function getProfileByClinicId(clinicId) {
+  const API_BASE = process.env.REACT_APP_API_BASE || '';
+  const res = await fetch(`${API_BASE}/api/patient-profile-by-clinic-id/?clinic_id=${encodeURIComponent(clinicId)}`, {
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
 // Update user profile (PATCH to /api/me/)
 export async function updateProfile(data) {
   const res = await fetch(`${API_BASE}/api/me/`, {
@@ -55,13 +64,7 @@ export async function login(email, password) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
   });
-  const text = await res.text();
-  try {
-    return JSON.parse(text);
-  } catch (err) {
-    // If response is not JSON, return a clear error
-    return { error: 'Server returned invalid response', raw: text };
-  }
+  return res.json();
 }
 
 export function getAuthHeaders() {
@@ -145,4 +148,18 @@ export async function deleteArthnatalBooking(id) {
   return res.ok;
 }
 
-export default { login, fetchServices, createAppointment, deleteAppointment, deleteArthnatalBooking };
+// Upload profile picture (PATCH to /api/profile-picture/)
+export async function uploadProfilePicture(file) {
+  const API_BASE = process.env.REACT_APP_API_BASE || '';
+  const formData = new FormData();
+  formData.append('profile_picture', file);
+  const res = await fetch(`${API_BASE}/api/profile-picture/`, {
+    method: 'PATCH',
+    headers: { ...getAuthHeaders() }, // Do NOT set Content-Type for FormData
+    body: formData,
+  });
+  if (!res.ok) throw new Error('Failed to upload profile picture');
+  return res.json();
+}
+
+export default { login, fetchServices, createAppointment, deleteAppointment, deleteArthnatalBooking, uploadProfilePicture };

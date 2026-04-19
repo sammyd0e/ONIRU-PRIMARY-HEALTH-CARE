@@ -1,3 +1,55 @@
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from django.db.models import Count
+from rest_framework import generics
+from .models import AttendedPatient
+from .serializers import AttendedPatientSerializer
+
+class AttendedPatientCreateView(generics.CreateAPIView):
+    queryset = AttendedPatient.objects.all()
+    serializer_class = AttendedPatientSerializer
+    # Optionally add authentication/permissions if needed
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def appointment_by_clinic_id(request):
+    """
+    Fetch the latest appointment for a given clinic_id.
+    Returns: appointment_type, patient_full_name, total_amount, and other details.
+    """
+    clinic_id = request.query_params.get('clinic_id')
+    print(f"DEBUG: appointment_by_clinic_id called with clinic_id={clinic_id}")
+    if not clinic_id:
+        print("DEBUG: clinic_id missing")
+        return Response({'error': 'clinic_id is required'}, status=400)
+    appt = Appointment.objects.filter(clinic_id=clinic_id).order_by('-created_at').first()
+    print(f"DEBUG: found appointment={appt}")
+    if not appt:
+        print("DEBUG: No appointment found for clinic_id")
+        return Response({'error': 'No appointment found for this clinic_id'}, status=404)
+    # Use serializer to return details
+    data = AppointmentSerializer(appt, context={'request': request}).data
+    print(f"DEBUG: serialized data={data}")
+    return Response(data)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def daily_patient_count_by_service(request):
+    """
+    Returns a count of patients per appointment_type for today.
+    """
+    today = timezone.now().date()
+    qs = Appointment.objects.filter(scheduled_date=today)
+    # Group by appointment_type and count
+    data = (
+        qs.values('appointment_type')
+        .annotate(count=Count('id'))
+        .order_by('-count')
+    )
+    # Return as {service: count}
+    result = {item['appointment_type'] or 'Unknown': item['count'] for item in data}
+    return Response(result)
+
 # appointments/views.py
 from rest_framework import viewsets, permissions
 from .models import Appointment

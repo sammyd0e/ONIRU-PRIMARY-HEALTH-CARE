@@ -1,6 +1,25 @@
+
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
+
+# Model for patients attended by frontdesk staff
+class AttendedPatient(models.Model):
+    name = models.CharField(max_length=255)
+    clinic_id = models.CharField(max_length=32)
+    amount_paid = models.DecimalField(max_digits=10, decimal_places=2)
+    sex = models.CharField(max_length=16)
+    payment_method = models.CharField(max_length=32, blank=True, null=True)
+    appointment_type = models.CharField(max_length=32, blank=True, null=True, help_text="Type of appointment, e.g. General, Antenatal, Eyes")
+    payment_type = models.CharField(max_length=32, blank=True, null=True, help_text="Type of payment, e.g. full, partial, insurance")
+    attended_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'appointments_attendedpatient'
+        ordering = ['-attended_at']
+
+    def __str__(self):
+        return f"{self.name} ({self.clinic_id}) - {self.amount_paid} - {self.sex}"
 
 class Diagnosis(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='diagnoses')
@@ -71,6 +90,8 @@ class Appointment(models.Model):
     status = models.CharField(max_length=64, db_index=True)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     clinic_id = models.CharField(max_length=12, blank=True, null=True, db_index=True)
+    appointment_type = models.CharField(max_length=32, blank=True, null=True, db_index=True, help_text="Type of appointment, e.g. General, Antenatal, Eyes")
+    payment_method = models.CharField(max_length=16, blank=True, null=True, db_index=True, help_text="Payment method: cash or transfer")
     scheduled_date = models.DateField(null=True, blank=True, db_index=True)
     scheduled_time = models.TimeField(null=True, blank=True)
     doctor = models.ForeignKey(

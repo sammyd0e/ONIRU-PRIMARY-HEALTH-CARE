@@ -12,6 +12,8 @@ from appointments.views import AppointmentViewSet, DoctorViewSet
 from feedback.views import FeedbackViewSet
 from rest_framework_simplejwt.views import TokenRefreshView
 from users.views import SignupView, MeView, EmailTokenObtainPairView
+from django.conf import settings
+from django.conf.urls.static import static
 
 # Top-level URL patterns. We register both the original ecommerce prefixes
 # and the clinical aliases so external clients can use either during the
@@ -45,3 +47,6 @@ urlpatterns += [
 #    path('api/signup/', SignupView.as_view(), name='api-signup'),
 #    path('api/me/', MeView.as_view(), name='api-me'),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

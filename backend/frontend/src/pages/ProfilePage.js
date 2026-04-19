@@ -1,15 +1,92 @@
 import React, { useState } from 'react';
-import { updateProfile, getProfile } from '../api';
+import { formatDistanceToNow, parseISO } from 'date-fns';
+import { updateProfile, getProfile, uploadProfilePicture } from '../api';
 import { fetchRecentDiagnosesAndResults } from '../api.diagnosis';
 import { fetchArthnatalBookings } from '../api';
 import { fetchAppointments } from '../api';
 import { useNavigate } from 'react-router-dom';
 import { createChildPatientProfile, createChildAccount } from '../api';
-
 import './ProfilePage.css';
 import SymptomChatbot from '../components/SymptomChatbot';
 
-export default function ProfilePage() {
+// Profile picture upload and display
+function ProfilePictureSection({ profile, setProfile }) {
+  const [uploading, setUploading] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const fileInputRef = React.useRef();
+  const API_BASE = process.env.REACT_APP_API_BASE || '';
+
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const data = await uploadProfilePicture(file);
+      setProfile((prev) => ({ ...prev, profile_picture: data.profile_picture }));
+    } catch (err) {
+      setError('Failed to upload. Please try again.');
+    }
+    setUploading(false);
+  };
+
+  const imageUrl = profile?.profile_picture
+    ? (profile.profile_picture.startsWith('http') ? profile.profile_picture : `${API_BASE}${profile.profile_picture}`)
+    : null;
+
+  return (
+    <div style={{ marginRight: 24, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <div style={{ position: 'relative', width: 80, height: 80, marginBottom: 8 }}>
+        {imageUrl ? (
+          <img
+            src={imageUrl}
+            alt="Profile"
+            style={{ width: 80, height: 80, borderRadius: '50%', objectFit: 'cover', border: '2px solid #2563eb' }}
+          />
+        ) : (
+          <div style={{ width: 80, height: 80, borderRadius: '50%', background: '#e5e7eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 36, color: '#2563eb', border: '2px solid #e5e7eb' }}>
+            👤
+          </div>
+        )}
+        <button
+          onClick={() => fileInputRef.current.click()}
+          style={{
+            position: 'absolute',
+            bottom: 0,
+            right: 0,
+            background: '#2563eb',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '50%',
+            width: 28,
+            height: 28,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 18,
+            cursor: uploading ? 'not-allowed' : 'pointer',
+            boxShadow: '0 2px 8px rgba(37,99,235,0.12)',
+          }}
+          disabled={uploading}
+          title="Upload profile picture"
+        >
+          {uploading ? '⏳' : '✏️'}
+        </button>
+        <input
+          type="file"
+          accept="image/*"
+          ref={fileInputRef}
+          style={{ display: 'none' }}
+          onChange={handleFileChange}
+          disabled={uploading}
+        />
+      </div>
+      {error && <div style={{ color: '#dc2626', fontSize: 12 }}>{error}</div>}
+    </div>
+  );
+}
+
+export default function ProfilePage({ profileOverride }) {
     // Debug: Show access token status
     const accessToken = window.localStorage.getItem('access');
     console.log('[DEBUG] Access token:', accessToken);
@@ -54,12 +131,17 @@ export default function ProfilePage() {
 
   // State for user, profile, and children
   const [user, setUser] = React.useState(null);
-  const [profile, setProfile] = React.useState(null);
+  const [profile, setProfile] = React.useState(profileOverride || null);
   const [children, setChildren] = React.useState([]);
-  const [loadingProfile, setLoadingProfile] = React.useState(true);
+  const [loadingProfile, setLoadingProfile] = React.useState(profileOverride ? false : true);
 
   // Always fetch the latest profile from backend on mount
   React.useEffect(() => {
+    if (profileOverride) {
+      setProfile(profileOverride);
+      setLoadingProfile(false);
+      return;
+    }
     const fetchProfile = async () => {
       setLoadingProfile(true);
       try {
@@ -92,7 +174,7 @@ export default function ProfilePage() {
       setLoadingProfile(false);
     };
     fetchProfile();
-  }, []);
+  }, [profileOverride]);
   // Modal state for child appointment
   const [appointmentModalChild, setAppointmentModalChild] = useState(null);
 
@@ -460,12 +542,23 @@ export default function ProfilePage() {
   
 
         <header className="profile-header">
-          <div className="avatar" aria-hidden>👤</div>
+          <ProfilePictureSection profile={profile} setProfile={setProfile} />
           <div>
             <h2>{user?.first_name || user?.email || 'User'}</h2>
-            <p class="generall">Member since {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'just now'}</p>
+            <p class="generall">
+              Member since{' '}
+              {(() => {
+                const joinDate = user?.date_joined || user?.created_at || profile?.created_at;
+                if (!joinDate) return 'unknown';
+                let dateObj = typeof joinDate === 'string' ? parseISO(joinDate) : new Date(joinDate);
+                if (isNaN(dateObj)) return 'unknown';
+                return formatDistanceToNow(dateObj, { addSuffix: true });
+              })()}
+            </p>
           </div>
         </header>
+        {/* ...existing code... */}
+
 
         <ClinicIdDisplay profile={profile} />
         {/* Antenatal Booking Info Section */}
@@ -578,9 +671,10 @@ export default function ProfilePage() {
             <ul className="appointments-list">
               {appointments.map((item, idx) => (
                 <li key={item.id || idx} className="appointment-item">
-                  <div style={{fontWeight:600}}>{item.service_id || 'Service'}</div>
+                  <div style={{fontWeight:600}}>{item.appointment_type || item.service_id || 'Service'}</div>
                   <div style={{fontSize:15}}>{item.scheduled_date ? new Date(item.scheduled_date).toLocaleDateString() : 'No date'} {item.scheduled_time || ''}</div>
                   <div style={{fontSize:14, marginTop:2}}>{item.status}</div>
+                  {item.payment_method && <div style={{fontSize:14, marginTop:2}}><b>Payment:</b> {item.payment_method}</div>}
                   {item.note && <div style={{fontSize:14, marginTop:2}}><b>Note:</b> {item.note}</div>}
                   {item.created_at && <div className="muted" style={{fontSize:12}}>Booked: {new Date(item.created_at).toLocaleString()}</div>}
                 </li>

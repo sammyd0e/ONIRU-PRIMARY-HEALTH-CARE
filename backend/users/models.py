@@ -176,6 +176,10 @@ class PatientProfile(models.Model):
     weight = models.DecimalField(max_digits=6, decimal_places=2, blank=True, null=True, help_text="kg")
     height = models.DecimalField(max_digits=5, decimal_places=2, blank=True, null=True, help_text="cm")
 
+
+    # Profile picture
+    profile_picture = models.ImageField(upload_to='profile_pics/', blank=True, null=True)
+
     # A short unique alphanumeric clinic ID shown on user profiles and used when booking
     clinic_id = models.CharField(max_length=12, unique=True, blank=True, null=True)
 
