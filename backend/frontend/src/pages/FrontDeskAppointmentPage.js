@@ -27,7 +27,8 @@ export default function FrontDeskAppointmentPage({ onSubmit }) {
   const [sex, setSex] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
-  // const [loadingCount, setLoadingCount] = useState(false);
+  const [loadingCount] = useState(false);
+  const [dailyCount] = useState({});
   const [error, setError] = useState('');
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [autoFetched, setAutoFetched] = useState(false);
