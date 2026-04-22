@@ -20,7 +20,7 @@ export default function SignupPage() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = e => {
@@ -54,7 +54,7 @@ export default function SignupPage() {
     setLoading(true);
     // helper: read csrftoken cookie (Django's default)
     const getCookie = (name) => {
-      const matches = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\\\/\+^])/g, '\\$1') + '=([^;]*)'));
+      const matches = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()\[\]\/\+^])/g, '\\$1') + '=([^;]*)'));
       return matches ? decodeURIComponent(matches[1]) : undefined;
     };
 

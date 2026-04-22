@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import AppointmentBillboard from './components/AppointmentBillboard';
+// import AppointmentBillboard from './components/AppointmentBillboard';
 import BillboardAppointmentsPage from './pages/BillboardAppointmentsPage';
 import './App.css';
 import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';

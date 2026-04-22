@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './BookingModal.css';
-import { createAppointment, getProfile, fetchDoctors } from '../api';
+import { createAppointment, fetchDoctors } from '../api';
 
 export default function BookingModal({ open, service, onClose, onBooked, hasPendingGeneral }) {
   const [date, setDate] = useState('');

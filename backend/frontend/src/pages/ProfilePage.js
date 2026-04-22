@@ -484,14 +484,7 @@ export default function ProfilePage({ profileOverride }) {
     }
 
     // Get next appointment (soonest upcoming)
-    const nextAppointment = appointments && appointments.length > 0
-      ? appointments.reduce((min, a) => {
-          const adate = new Date(a.scheduled_date);
-          if (!min) return a;
-          const mindate = new Date(min.scheduled_date);
-          return adate < mindate ? a : min;
-        }, null)
-      : null;
+
 
     // Professional section for antenatal info
     const AntenatalInfoSection = () => (

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import './ServicesPage.css';
-import { Link } from 'react-router-dom';
+// import { Link } from 'react-router-dom';
 import BookingModal from '../components/BookingModal';
 import ArthnatalModal from '../components/ArthnatalModal';
 

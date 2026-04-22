@@ -162,4 +162,5 @@ export async function uploadProfilePicture(file) {
   return res.json();
 }
 
-export default { login, fetchServices, createAppointment, deleteAppointment, deleteArthnatalBooking, uploadProfilePicture };
+const api = { login, fetchServices, createAppointment, deleteAppointment, deleteArthnatalBooking, uploadProfilePicture };
+export default api;
