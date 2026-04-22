@@ -1,14 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import './AppointmentBillboard.css';
 
-function Section({ title, children }) {
-  return (
-    <div className="billboard-section">
-      <h4 className="billboard-section-title">{title}</h4>
-      <div className="billboard-section-content">{children}</div>
-    </div>
-  );
-}
+
 
 export default function AppointmentBillboard() {
   const [appointments, setAppointments] = useState([]);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchDailyPatientCount, fetchAppointmentByClinicId, getAuthHeaders } from '../api';
+import { getAuthHeaders } from '../api';
 import './FrontDeskAppointmentPage.css';
 
 const APPOINTMENT_TYPES = [
@@ -27,12 +27,12 @@ export default function FrontDeskAppointmentPage({ onSubmit }) {
   const [sex, setSex] = useState('');
   const [scheduledDate, setScheduledDate] = useState('');
   const [scheduledTime, setScheduledTime] = useState('');
-  const [loadingCount, setLoadingCount] = useState(false);
+  // const [loadingCount, setLoadingCount] = useState(false);
   const [error, setError] = useState('');
   const [fetchingDetails, setFetchingDetails] = useState(false);
   const [autoFetched, setAutoFetched] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [dailyCount, setDailyCount] = useState({});
+  // const [dailyCount, setDailyCount] = useState({});
 
   useEffect(() => {
     if (clinicId) {
