@@ -8,6 +8,8 @@ services:
     envVars:
       - key: DJANGO_SETTINGS_MODULE
         value: clinic.settings
+      - key: PYTHONPATH
+        value: backend
       - key: PYTHON_VERSION
         value: 3.11
       - key: DATABASE_URL
