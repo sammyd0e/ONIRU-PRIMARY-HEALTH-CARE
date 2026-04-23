@@ -7,6 +7,6 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'clinic.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'eccomerce.settings')
 
 application = get_wsgi_application()
