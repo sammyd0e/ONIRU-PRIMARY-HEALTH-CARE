@@ -61,7 +61,7 @@ export default function SignupPage() {
     // POST to backend signup endpoint. Using same-origin credentials and CSRF token.
     (async () => {
       try {
-        const res = await fetch('/api/signup/', {
+        const res = await fetch(`${process.env.REACT_APP_API_BASE}/api/signup/`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
