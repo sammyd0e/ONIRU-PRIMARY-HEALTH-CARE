@@ -300,18 +300,35 @@ class PatientProfileCreateView(generics.CreateAPIView):
 		serializer.save(user=None)
 
 class PatientProfileByClinicIdView(APIView):
-    permission_classes = [AllowAny]
+	permission_classes = [IsAuthenticated]
 
-    def get(self, request):
-        clinic_id = request.GET.get('clinic_id')
-        if not clinic_id:
-            return Response({'error': 'clinic_id is required'}, status=400)
-        try:
-            profile = PatientProfile.objects.get(clinic_id=clinic_id)
-        except PatientProfile.DoesNotExist:
-            return Response({'error': 'Profile not found'}, status=404)
-        data = PatientProfileSerializer(profile).data
-        return Response({'profile': data})
+	def get(self, request):
+		clinic_id = request.GET.get('clinic_id')
+		if not clinic_id:
+			return Response({'error': 'clinic_id is required'}, status=400)
+		try:
+			profile = PatientProfile.objects.get(clinic_id=clinic_id)
+		except PatientProfile.DoesNotExist:
+			return Response({'error': 'Profile not found'}, status=404)
+		data = PatientProfileSerializer(profile).data
+		return Response({'profile': data})
+
+	def patch(self, request):
+		# Only allow staff (nurse/admin) to update any patient profile
+		if not request.user.is_staff:
+			return Response({'error': 'Permission denied. Only staff can update patient vitals.'}, status=403)
+		clinic_id = request.GET.get('clinic_id')
+		if not clinic_id:
+			return Response({'error': 'clinic_id is required'}, status=400)
+		try:
+			profile = PatientProfile.objects.get(clinic_id=clinic_id)
+		except PatientProfile.DoesNotExist:
+			return Response({'error': 'Profile not found'}, status=404)
+		serializer = PatientProfileSerializer(profile, data=request.data, partial=True)
+		if serializer.is_valid():
+			serializer.save()
+			return Response({'profile': serializer.data})
+		return Response({'error': serializer.errors}, status=400)
 
 class ProfilePictureUploadView(APIView):
     permission_classes = [IsAuthenticated]

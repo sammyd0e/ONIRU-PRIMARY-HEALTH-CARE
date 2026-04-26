@@ -14,6 +14,7 @@ import { createAppointment } from './api';
 
 import AboutUsPage from './pages/AboutUsPage';
 import DoctorsPage from './pages/doctorspage';
+import NurseVitalsPage from './pages/NurseVitalsPage';
 
 
 function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll }) {
@@ -45,6 +46,7 @@ function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll 
           {isAuth ? (
             <>
               <Link to="/profile" className="nav-link">Profile</Link>
+              <Link to="/nurse-vitals" className="nav-link">Nurse Vitals</Link>
               <button className="btn btn-ghost" onClick={onSignOut}>Sign out</button>
             </>
           ) : (
@@ -178,6 +180,7 @@ function AppContent() {
           } />
           <Route path="/doctorspage" element={<DoctorsPage />} />
           <Route path="/doctors" element={<DoctorsPage />} />
+          <Route path="/nurse-vitals" element={<RequireAuth><NurseVitalsPage /></RequireAuth>} />
         </Routes>
       </main>
 
