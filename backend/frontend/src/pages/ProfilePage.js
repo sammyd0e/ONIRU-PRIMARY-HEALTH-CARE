@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { formatDistanceToNow, parseISO } from 'date-fns';
 import { updateProfile, getProfile, uploadProfilePicture } from '../api';
-import { fetchRecentDiagnosesAndResults } from '../api.diagnosis';
+import { fetchRecentDiagnosesAndResults, fetchDiagnosesByClinicId } from '../api.diagnosis';
 import { fetchArthnatalBookings } from '../api';
 import { fetchAppointments } from '../api';
 import { useNavigate } from 'react-router-dom';
-import { createChildPatientProfile, createChildAccount } from '../api';
+import { createChildPatientProfile, createChildAccount, createAppointment } from '../api';
 import './ProfilePage.css';
 import SymptomChatbot from '../components/SymptomChatbot';
+
 
 // Profile picture upload and display
 function ProfilePictureSection({ profile, setProfile }) {
@@ -87,12 +88,12 @@ function ProfilePictureSection({ profile, setProfile }) {
 }
 
 export default function ProfilePage({ profileOverride }) {
-    // Debug: Show access token status
-    const accessToken = window.localStorage.getItem('access');
-    console.log('[DEBUG] Access token:', accessToken);
-    // Show a visible warning if the access token is missing or looks invalid
-    const isTokenMissing = !accessToken || accessToken.length < 10;
   // --- All hooks must be at the top ---
+  // State for user, profile, and children
+  const [user, setUser] = React.useState(null);
+  const [profile, setProfile] = React.useState(profileOverride || null);
+  const [children, setChildren] = React.useState([]);
+  const [loadingProfile, setLoadingProfile] = React.useState(profileOverride ? false : true);
   // State for diagnoses and test results
   const [diagnosisData, setDiagnosisData] = useState([]);
   const [diagnosisLoading, setDiagnosisLoading] = useState(true);
@@ -101,39 +102,51 @@ export default function ProfilePage({ profileOverride }) {
   const [vitals, setVitals] = useState({
     bloodPressure: '',
     sugarLevel: '',
-  
     cholesterolLevel: '',
     weight: '',
     height: '',
   });
   const [vitalsMsg, setVitalsMsg] = useState('');
   const [vitalsLoading, setVitalsLoading] = useState(false);
+  // ...existing code...
+  // Debug: Show access token status
+  const accessToken = window.localStorage.getItem('access');
+  console.log('[DEBUG] Access token:', accessToken);
+  // Show a visible warning if the access token is missing or looks invalid
+  const isTokenMissing = !accessToken || accessToken.length < 10;
 
   React.useEffect(() => {
     let mounted = true;
     setDiagnosisLoading(true);
-    fetchRecentDiagnosesAndResults()
-      .then(data => {
+    async function fetchDiagnosis() {
+      try {
+        let data = [];
+        // Prefer fetching by clinicId if available
+        if (profile && profile.clinic_id) {
+          console.log('[DEBUG] Fetching diagnoses by clinic_id:', profile.clinic_id);
+          data = await fetchDiagnosesByClinicId(profile.clinic_id);
+          console.log('[DEBUG] Diagnoses API response:', data);
+        } else {
+          console.log('[DEBUG] Fetching recent diagnoses for current user');
+          data = await fetchRecentDiagnosesAndResults();
+          console.log('[DEBUG] Diagnoses API response:', data);
+        }
         if (mounted) {
-          setDiagnosisData(Array.isArray(data) ? data : []);
+          // If paginated, use .results; if array, use as is
+          setDiagnosisData(Array.isArray(data) ? data : (Array.isArray(data.results) ? data.results : []));
           setDiagnosisLoading(false);
         }
-      })
-      .catch(err => {
+      } catch (err) {
+        console.error('[DEBUG] Error fetching diagnoses:', err);
         if (mounted) {
           setDiagnosisError('Could not load recent diagnoses or test results.');
           setDiagnosisLoading(false);
         }
-      });
+      }
+    }
+    fetchDiagnosis();
     return () => { mounted = false; };
-  }, []);
-
-
-  // State for user, profile, and children
-  const [user, setUser] = React.useState(null);
-  const [profile, setProfile] = React.useState(profileOverride || null);
-  const [children, setChildren] = React.useState([]);
-  const [loadingProfile, setLoadingProfile] = React.useState(profileOverride ? false : true);
+  }, [profile]);
 
   // Always fetch the latest profile from backend on mount
   React.useEffect(() => {
@@ -194,8 +207,7 @@ export default function ProfilePage({ profileOverride }) {
     const [reason, setReason] = React.useState('');
     const [statusMsg, setStatusMsg] = React.useState('');
     const [loading, setLoading] = React.useState(false);
-    // Import createAppointment from api
-    const { createAppointment } = require('../api');
+    // createAppointment is now imported at the top
 
     const handleSubmit = async e => {
       e.preventDefault();
@@ -585,19 +597,21 @@ export default function ProfilePage({ profileOverride }) {
             <div className="muted">No recent diagnoses or test results found.</div>
           ) : (
             <ul className="diagnosis-list">
-              {diagnosisData.map((item, idx) => (
-                <li key={item.id || idx} className="diagnosis-item">
-                  <div style={{fontWeight:600}}>{item.type || 'Diagnosis/Test'}</div>
-                  <div style={{fontSize:15}}>{item.label || item.name}</div>
-                  {item.date && <div className="muted" style={{fontSize:13}}>{new Date(item.date).toLocaleDateString()}</div>}
-                  {item.details && <div style={{fontSize:14, marginTop:2}}>{item.details}</div>}
-                  {item.result && <div style={{fontSize:14, marginTop:2}}><b>Result:</b> {item.result}</div>}
-                  {item.extra_info && item.extra_info.trim() !== '' && (
-                    <div style={{fontSize:13, marginTop:2, color:'#0e7490'}}><b>Note:</b> {item.extra_info}</div>
-                  )}
-                  {item.created_at && <div className="muted" style={{fontSize:12}}>Created: {new Date(item.created_at).toLocaleString()}</div>}
-                </li>
-              ))}
+              {diagnosisData
+                .filter(item => !item.user || !profile || item.user === profile.user)
+                .map((item, idx) => (
+                  <li key={item.id || idx} className="diagnosis-item">
+                    <div style={{fontWeight:600}}>{item.type || 'Diagnosis/Test'}</div>
+                    <div style={{fontSize:15}}>{item.label || item.name}</div>
+                    {item.date && <div className="muted" style={{fontSize:13}}>{new Date(item.date).toLocaleDateString()}</div>}
+                    {item.details && <div style={{fontSize:14, marginTop:2}}>{item.details}</div>}
+                    {item.result && <div style={{fontSize:14, marginTop:2}}><b>Result:</b> {item.result}</div>}
+                    {item.extra_info && item.extra_info.trim() !== '' && (
+                      <div style={{fontSize:13, marginTop:2, color:'#0e7490'}}><b>Note:</b> {item.extra_info}</div>
+                    )}
+                    {item.created_at && <div className="muted" style={{fontSize:12}}>Created: {new Date(item.created_at).toLocaleString()}</div>}
+                  </li>
+                ))}
             </ul>
           )}
         </section>

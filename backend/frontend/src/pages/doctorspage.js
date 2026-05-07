@@ -1,8 +1,10 @@
 
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { getProfileByClinicId } from '../api';
 import ProfilePage from './ProfilePage';
 import './FrontDeskAppointmentPage.css';
+import { useNavigate } from 'react-router-dom';
 
 function Spinner() {
   return (
@@ -14,11 +16,20 @@ function Spinner() {
 }
 
 
+
 export default function DoctorsPage() {
   const [clinicId, setClinicId] = useState('');
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Check doctor authentication
+    if (sessionStorage.getItem('doctorAuth') !== 'true') {
+      navigate('/doctor-login');
+    }
+  }, [navigate]);
 
   const handleFetchProfile = async (e) => {
     e.preventDefault();

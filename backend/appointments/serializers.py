@@ -12,14 +12,16 @@ from .models import Appointment, Doctor, Diagnosis, TestResult
 
 # Serializers for Diagnosis and TestResult
 class DiagnosisSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = Diagnosis
-        fields = ['id', 'label', 'details', 'extra_info', 'date', 'created_at']
+        fields = ['id', 'user', 'label', 'details', 'extra_info', 'date', 'created_at']
 
 class TestResultSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
     class Meta:
         model = TestResult
-        fields = ['id', 'label', 'result', 'details', 'extra_info', 'date', 'created_at']
+        fields = ['id', 'user', 'label', 'result', 'details', 'extra_info', 'date', 'created_at']
 from django.contrib.auth import get_user_model
 
 User = get_user_model()

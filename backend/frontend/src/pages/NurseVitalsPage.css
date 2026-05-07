@@ -1,0 +1,100 @@
+/* NurseVitalsPage.css - Professional, modern styling for nurse vitals page */
+
+.nurse-vitals-container {
+  max-width: 1400px;
+  margin: 32px auto;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  padding: 62px 80px;
+  font-family: 'Inter', Arial, sans-serif;
+}
+
+.nurse-vitals-header {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2563eb;
+  margin-bottom: 24px;
+  letter-spacing: -1px;
+}
+
+.nurse-vitals-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 32px;
+  background: #f9fafb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.nurse-vitals-table th, .nurse-vitals-table td {
+  padding: 14px 16px;
+  text-align: left;
+}
+
+.nurse-vitals-table th {
+  background: #f1f5f9;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.nurse-vitals-table tr {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.nurse-vitals-table tr:last-child {
+  border-bottom: none;
+}
+
+.nurse-vitals-table td {
+  color: #334155;
+}
+
+.btn {
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  padding: 8px 18px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: #1d4ed8;
+}
+
+.nurse-vitals-form {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.nurse-vitals-form input, .nurse-vitals-form select {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 1rem;
+  outline: none;
+  transition: border 0.2s;
+}
+
+.nurse-vitals-form input:focus, .nurse-vitals-form select:focus {
+  border-color: #2563eb;
+}
+
+.nurse-vitals-error {
+  color: #dc2626;
+  margin-top: 8px;
+  font-size: 0.98rem;
+}
+
+.nurse-vitals-section-title {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #2563eb;
+  margin: 32px 0 12px 0;
+}

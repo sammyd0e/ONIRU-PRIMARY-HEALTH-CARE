@@ -1,3 +1,6 @@
+def get_today():
+    from django.utils import timezone
+    return timezone.now().date()
 
 from django.db import models
 from django.conf import settings
@@ -26,7 +29,7 @@ class Diagnosis(models.Model):
     label = models.CharField(max_length=255)
     details = models.TextField(blank=True)
     extra_info = models.TextField(blank=True, help_text="Extra information for frontend display")
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(default=get_today)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -43,7 +46,7 @@ class TestResult(models.Model):
     result = models.CharField(max_length=255)
     details = models.TextField(blank=True)
     extra_info = models.TextField(blank=True, help_text="Extra information for frontend display")
-    date = models.DateField(default=timezone.now)
+    date = models.DateField(default=get_today)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

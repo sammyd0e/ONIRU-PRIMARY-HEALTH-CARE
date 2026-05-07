@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
+import { Routes, Route, Navigate, useNavigate, Link } from 'react-router-dom';
 // import AppointmentBillboard from './components/AppointmentBillboard';
 import BillboardAppointmentsPage from './pages/BillboardAppointmentsPage';
+import LandingPage from './pages/LandingPage';
 import './App.css';
-import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import ServicesPage from './pages/ServicesPage';
 import AppointmentsPage from './pages/AppointmentsPage';
@@ -15,6 +16,10 @@ import { createAppointment } from './api';
 import AboutUsPage from './pages/AboutUsPage';
 import DoctorsPage from './pages/doctorspage';
 import NurseVitalsPage from './pages/NurseVitalsPage';
+import NurseLoginPage from './pages/NurseLoginPage';
+import DoctorLoginPage from './pages/DoctorLoginPage';
+import FrontDeskLoginPage from './pages/FrontDeskLoginPage';
+import { BrowserRouter } from 'react-router-dom';
 
 
 function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll }) {
@@ -46,7 +51,9 @@ function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll 
           {isAuth ? (
             <>
               <Link to="/profile" className="nav-link">Profile</Link>
-              <Link to="/nurse-vitals" className="nav-link">Nurse Vitals</Link>
+              <Link to="/nurse-vitals" className="nav-link">Nurse Vitals
+              
+              </Link>
               <button className="btn btn-ghost" onClick={onSignOut}>Sign out</button>
             </>
           ) : (
@@ -65,14 +72,6 @@ function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll 
   );
 }
 
-function Feature({ iconClass, children }) {
-  return (
-    <article className="feature">
-      <div className="feature-icon"><i className={iconClass} /></div>
-      <div className="feature-body">{children}</div>
-    </article>
-  );
-}
 
 function Footer() {
   return (
@@ -90,6 +89,13 @@ function Footer() {
 
 
 
+// NurseVitalsAuth: Protects nurse vitals route with sessionStorage check
+function NurseVitalsAuth({ children }) {
+  return sessionStorage.getItem('nurseAuth') === 'true'
+    ? children
+    : <Navigate to="/nurse-login" replace />;
+}
+
 function AppContent() {
   const [menuOpen, setMenuOpen] = useState(false);
   const isAuth = !!localStorage.getItem('access');
@@ -97,6 +103,7 @@ function AppContent() {
 
   const handleSignOut = () => {
     localStorage.removeItem('access');
+    sessionStorage.removeItem('nurseAuth');
     window.location.href = '/login';
   };
 
@@ -123,35 +130,13 @@ function AppContent() {
   return (
     <div className="App">
       <Header isAuth={isAuth} onSignOut={handleSignOut} onToggleMenu={toggleMenu} menuOpen={menuOpen} handleNavAndScroll={handleNavAndScroll} />
-
       <main className="main-content">
-        <section className="hero">
-          <div className="container">
-            <h2 className='' >Welcome to <br></br> <h1 className='oniru'>Oniru Health Center</h1> </h2>
-            <p className="ooniru">
- featuring online booking, digital records, AI diagnostics, and real-time tracking, all securely online 😊. 
-<br /> <span style={{ color: 'gold' }}></span></p>
-            <div className="hero-ctas">
-              <button className="btn btn-primary oniru " onClick={() => handleNavAndScroll('/services', 'services-section')}>Browse Services</button>
-              <button className="btn btn-ghost oniru" onClick={() => handleNavAndScroll('/billboard-appointments', 'billboard-section')}>Billboard Appointments</button>
-            </div>
-          </div>
-        </section>
+      
 
-        <section className="features">
-          <Feature iconClass="bi bi-geo-fill oniru">
-            <p className='oniru'>Palace Road, Oniru, Lagos Nigeria <br/></p>
-          </Feature>
-          <Feature iconClass="bi bi-telephone-inbound-fill oniru">
-            <p className='oniru'>+234 907 6664 963</p>
-          </Feature>
-          <Feature iconClass="bi bi-alarm oniru">
-            <p className='oniru' >Mon–Fri 08:00–21:00<br/></p>
-          </Feature>
-        </section>
+        
 
         <Routes>
-          <Route path="/" element={<Navigate to="/services" replace />} />
+          <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/profile" element={<ProfilePage />} />
@@ -180,10 +165,12 @@ function AppContent() {
           } />
           <Route path="/doctorspage" element={<DoctorsPage />} />
           <Route path="/doctors" element={<DoctorsPage />} />
-          <Route path="/nurse-vitals" element={<RequireAuth><NurseVitalsPage /></RequireAuth>} />
+          <Route path="/nurse-login" element={<NurseLoginPage />} />
+          <Route path="/nurse-vitals" element={<NurseVitalsAuth><NurseVitalsPage /></NurseVitalsAuth>} />
+          <Route path="/doctor-login" element={<DoctorLoginPage />} />
+          <Route path="/frontdesk-login" element={<FrontDeskLoginPage />} />
         </Routes>
       </main>
-
       <Footer />
     </div>
   );

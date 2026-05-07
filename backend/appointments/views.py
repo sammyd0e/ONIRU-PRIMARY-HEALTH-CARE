@@ -1,3 +1,30 @@
+from django.contrib.auth import get_user_model
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from .serializers import DiagnosisSerializer, TestResultSerializer
+
+# API view to fetch diagnoses and test results by clinic_id
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def diagnoses_and_results_by_clinic_id(request):
+    clinic_id = request.query_params.get('clinic_id')
+    if not clinic_id:
+        return Response({'error': 'clinic_id is required'}, status=400)
+    User = get_user_model()
+    try:
+        user = User.objects.get(patient_profile__clinic_id=clinic_id)
+    except User.DoesNotExist:
+        return Response({'error': 'No patient found for this clinic_id'}, status=404)
+    diagnoses = user.diagnoses.all().order_by('-date', '-created_at')[:10]
+    test_results = user.test_results.all().order_by('-date', '-created_at')[:10]
+    combined = [
+        {"type": "Diagnosis", **DiagnosisSerializer(d).data} for d in diagnoses
+    ] + [
+        {"type": "Test Result", **TestResultSerializer(t).data} for t in test_results
+    ]
+    combined.sort(key=lambda x: (x['date'], x['created_at']), reverse=True)
+    return Response(combined)
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
 from django.db.models import Count
@@ -52,8 +79,116 @@ def daily_patient_count_by_service(request):
 
 # appointments/views.py
 from rest_framework import viewsets, permissions
-from .models import Appointment
+from .models import Appointment, Diagnosis, TestResult
 from .serializers import AppointmentSerializer, DiagnosisSerializer, TestResultSerializer
+from rest_framework import mixins
+
+# ViewSet for Diagnosis
+
+class DiagnosisViewSet(viewsets.ModelViewSet):
+    queryset = Diagnosis.objects.all()
+    serializer_class = DiagnosisSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated and user.email == "nurse@example.com":
+            return Diagnosis.objects.all()
+        # Patients see only their own diagnoses
+        return Diagnosis.objects.filter(user=user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.is_authenticated and user.email == "nurse@example.com":
+            # Expect patient_id in request.data
+            patient_id = self.request.data.get('patient_id')
+            if not patient_id:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({"patient_id": "This field is required when nurse is creating a diagnosis."})
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                patient = User.objects.get(id=patient_id)
+            except User.DoesNotExist:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({"patient_id": "No user found with this id."})
+            serializer.save(user=patient)
+        else:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only nurse@example.com can create diagnoses.")
+
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        if not user.is_authenticated:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Authentication required to update diagnoses.")
+        if user.email == "nurse@example.com":
+            serializer.save()
+        else:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only nurse@example.com can update diagnoses.")
+
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        if not user.is_authenticated:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Authentication required to delete diagnoses.")
+        if user.email == "nurse@example.com":
+            instance.delete()
+        else:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only nurse@example.com can delete diagnoses.")
+
+# ViewSet for TestResult
+class TestResultViewSet(viewsets.ModelViewSet):
+    queryset = TestResult.objects.all()
+    serializer_class = TestResultSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_authenticated and user.email == "nurse@example.com":
+            return TestResult.objects.all()
+        # Patients see only their own test results
+        return TestResult.objects.filter(user=user)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.is_authenticated and user.email == "nurse@example.com":
+            # Expect patient_id in request.data
+            patient_id = self.request.data.get('patient_id')
+            if not patient_id:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({"patient_id": "This field is required when nurse is creating a test result."})
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            try:
+                patient = User.objects.get(id=patient_id)
+            except User.DoesNotExist:
+                from rest_framework.exceptions import ValidationError
+                raise ValidationError({"patient_id": "No user found with this id."})
+            serializer.save(user=patient)
+        else:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only nurse@example.com can create test results.")
+
+    def perform_update(self, serializer):
+        user = self.request.user
+        if user.is_authenticated and user.email == "nurse@example.com":
+            serializer.save()
+        else:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only nurse@example.com can update test results.")
+
+    def perform_destroy(self, instance):
+        user = self.request.user
+        if user.is_authenticated and user.email == "nurse@example.com":
+            instance.delete()
+        else:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only nurse@example.com can delete test results.")
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
