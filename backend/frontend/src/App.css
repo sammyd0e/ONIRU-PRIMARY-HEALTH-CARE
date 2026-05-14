@@ -21,7 +21,7 @@
 .container {
   /* width: 100%; */
   max-width: 1100px;
-  margin: 0 auto;
+  margin:0 auto;
   padding: 0 16px;
 }
 
@@ -331,5 +331,5 @@
   font-weight: 700;
   font-style: normal;
   text-align: center;
-  color: #ffd323;
+  color: #000000;
 }

@@ -169,9 +169,16 @@ export default function BookingModal({ open, service, onClose, onBooked, hasPend
   }
 
   const errors = validate();
+  // Handler to close modal when clicking the backdrop
+  function handleBackdropClick(e) {
+    if (e.target === e.currentTarget) {
+      onClose && onClose();
+    }
+  }
+
   return (
-    <div className="sb-modal-backdrop" role="dialog" aria-modal="true">
-      <form className="sb-modal sb-modal-enhanced" onSubmit={submit} noValidate>
+    <div className="sb-modal-backdrop" role="dialog" aria-modal="true" onClick={handleBackdropClick}>
+      <form className="sb-modal sb-modal-enhanced" onSubmit={submit} noValidate onClick={e => e.stopPropagation()}>
         <button
           type="button"
           className="modal-cancel-btn"

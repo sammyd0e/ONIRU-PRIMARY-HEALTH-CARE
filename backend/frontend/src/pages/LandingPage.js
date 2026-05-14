@@ -1,48 +1,59 @@
+
+
 import React from 'react';
 import { Link } from 'react-router-dom';
 import './LandingPage.css';
-function Feature({ iconClass, children }) {
-  return (
-    <div className="feature">
-      <i className={iconClass}></i>
-      <p>{children}</p>
-    </div>
-  );
-}
-
 
 function LandingPage() {
   return (
-    <div className="landing-page">
-      <main className="main-content">
-        <section className="hero">
-          <div className="container">
-            <h2>Welcome to <br /><span className='oniru'>Oniru Health Center</span></h2>
-            <p className="ooniru">
-              Featuring online booking, digital records, AI diagnostics, and real-time tracking, all securely online 😊.
-            </p>
-            <div className="hero-ctas">
-              <Link to="/services" className="btn btn-primary oniru">Browse Services</Link>
-              <Link to="/billboard-appointments" className="btn btn-ghost oniru">Billboard Appointments</Link>
+    <div className="landing-page-bg">
+      <div className="landing-bg-image" />
+      <main className="main-content landing-overlay">
+        <section className="hero-pro hero-overlay">
+          <div className="container hero-container">
+            <div className="hero-text">
+              <h1 className="hero-title">Welcome to Oniru Health Center</h1>
+              <p className="hero-subtitle">Empowering your health journey with technology, expertise, and compassion.</p>
+              <ul className="hero-list">
+                <li>Online Appointment Booking</li>
+                <li>Personalized Patient Portal & Digital Records</li>
+                <li>Expert Medical Team & Modern Facilities</li>
+                <li>AI-powered Diagnostics & Real-time Updates</li>
+                <li>Confidential, Secure, and Patient-Centered Care</li>
+              </ul>
+              <div className="hero-ctas">
+                <Link to="/services" className="btn btn-primary">Explore Our Services</Link>
+                <Link to="/billboard-appointments" className="btn btn-ghost">View Appointments</Link>
+              </div>
+            </div>
+            <div className="hero-image">
+              <img src={process.env.PUBLIC_URL + '/onirulogo.jpg'} alt="Oniru Health Center" className="hero-img" />
             </div>
           </div>
-              
-          
         </section>
-     
 
-        
-  
-          <section className="features">
-          <Feature iconClass="bi bi-geo-fill oniru">
-            <p className='oniru'>Palace Road, Oniru, Lagos Nigeria <br/></p>
-          </Feature>
-          <Feature iconClass="bi bi-telephone-inbound-fill oniru">
-            <p className='oniru'>+234 907 6664 963</p>
-          </Feature>
-          <Feature iconClass="bi bi-alarm oniru">
-            <p className='oniru' >Mon–Fri 08:00–21:00<br/></p>
-          </Feature>
+        <section className="features-pro">
+          <div className="feature-card">
+            <div className="feature-icon"><i className="bi bi-geo-alt-fill"></i></div>
+            <div className="feature-content">
+              <h4>Location</h4>
+              <p>Palace Road, Oniru, Lagos, Nigeria</p>
+            </div>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon"><i className="bi bi-telephone-inbound-fill"></i></div>
+            <div className="feature-content">
+              <h4>Contact</h4>
+              <p>+234 907 6664 963</p>
+            </div>
+          </div>
+          <div className="feature-card">
+            <div className="feature-icon"><i className="bi bi-alarm"></i></div>
+            <div className="feature-content">
+              <h4>Hours</h4>
+              <p>Mon–Fri 08:00–21:00</p>
+            </div>
+          </div>
         </section>
       </main>
     </div>

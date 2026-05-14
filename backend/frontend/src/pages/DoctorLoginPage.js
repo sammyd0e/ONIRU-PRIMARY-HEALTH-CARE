@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import './DoctorLoginPage.css';
+
 // Hardcoded doctor credentials (replace with secure backend validation in production)
 const DOCTOR_USERNAME = 'doctor';
 const DOCTOR_PASSWORD = 'doc2026';

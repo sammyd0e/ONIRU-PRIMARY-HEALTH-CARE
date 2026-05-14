@@ -1,0 +1,103 @@
+/* Professional Nurse Login Styling */
+.nurse-login-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: none;
+  padding: 0 16px;
+  overflow: hidden;
+}
+
+.nurse-login-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: linear-gradient(135deg, #e0f7fa 0%, #00e1ff 100%);
+  filter: blur(56px) brightness(1.95);
+  z-index: 0;
+}
+
+.nurse-login-container > * {
+  position: relative;
+  z-index: 1;
+}
+.nurse-login-container h2 {
+  color: #0277bd;
+  font-size: 2.2rem;
+  margin-bottom: 24px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+.nurse-login-container form {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 4px 32px rgba(2,119,189,0.10);
+  padding: 36px 28px 28px 28px;
+  min-width: 320px;
+  max-width: 95vw;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.nurse-login-container label {
+  color: #000000;
+  font-weight: 600;
+  margin-bottom: 6px;
+  display: block;
+}
+.nurse-login-container input {
+  width: fit-content;
+  padding: 10px 12px;
+  border: 1px solid #b3e5fc;
+  border-radius: 8px;
+  font-size: 1rem;
+  margin-bottom: 8px;
+  background: #e7e9eb;
+  transition: border 0.2s;
+}
+.nurse-login-container input:focus {
+  border: 1.5px solid #0288d1;
+  outline: none;
+  background: #1ea1fd;
+}
+.nurse-login-container .error {
+  color: #d32f2f;
+  background: #ffebee;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  font-size: 0.98rem;
+  text-align: center;
+}
+.nurse-login-container button[type="submit"] {
+  background: linear-gradient(90deg, #0288d1 60%, #26c6da 100%);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  margin-top: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(2,119,189,0.08);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+.nurse-login-container button[type="submit"]:hover {
+  background: linear-gradient(90deg, #0277bd 60%, #00bcd4 100%);
+  box-shadow: 0 4px 24px rgba(2,119,189,0.13);
+}
+@media (max-width: 540px) {
+  .nurse-login-container form {
+    min-width: 0;
+    padding: 24px 8px 18px 8px;
+  }
+  .nurse-login-container h2 {
+    font-size: 1.3rem;
+  }
+}

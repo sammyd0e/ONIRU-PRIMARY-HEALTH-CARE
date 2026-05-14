@@ -10,9 +10,9 @@ import AppointmentsPage from './pages/AppointmentsPage';
 import SignupPage from './pages/SignupPage';
 import ProfilePage from './pages/ProfilePage';
 import { CreateChildAccountForm } from './pages/ProfilePage';
+import ForgotPassword from './components/ForgotPassword';
 import FrontDeskAppointmentPage from './pages/FrontDeskAppointmentPage';
 import { createAppointment } from './api';
-
 import AboutUsPage from './pages/AboutUsPage';
 import DoctorsPage from './pages/doctorspage';
 import NurseVitalsPage from './pages/NurseVitalsPage';
@@ -23,6 +23,27 @@ import { BrowserRouter } from 'react-router-dom';
 
 
 function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll }) {
+  // React state for dropdown visibility
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  // Close dropdown on outside click
+  React.useEffect(() => {
+    if (!dropdownOpen) return;
+    function handleClick() {
+      setDropdownOpen(false);
+    }
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [dropdownOpen]);
+
+
+  // Helper to check staff roles
+  // Always show all staff links for any authenticated user
+  const isNurse = true;
+  const isDoctor = true;
+  const isFrontdesk = true;
+  const hasStaffRole = true;
+
   return (
     <header className="site-header">
       <div className="container header-inner">
@@ -45,15 +66,39 @@ function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll 
         </button>
 
         <nav className={`site-nav ${menuOpen ? 'open' : ''}`} aria-label="Main navigation">
+          <Link to="/" className="nav-link">Home</Link>
           <Link to="/services" className="nav-link">Services</Link>
           <Link to="/appointments" className="nav-link">Appointments</Link>
           <Link to="/about" className="nav-link">About Us</Link>
           {isAuth ? (
             <>
               <Link to="/profile" className="nav-link">Profile</Link>
-              <Link to="/nurse-vitals" className="nav-link">Nurse Vitals
-              
-              </Link>
+              {/* Dropdown for staff links, always visible for logged-in users */}
+              <div className="nav-dropdown" style={{ position: 'relative', display: 'inline-block' }}>
+                <button
+                  className="nav-link"
+                  style={{ cursor: 'pointer', background: 'none', border: 'none', padding: 0 }}
+                  onClick={e => {
+                    e.stopPropagation();
+                    setDropdownOpen(v => !v);
+                  }}
+                  aria-haspopup="true"
+                  aria-expanded={dropdownOpen}
+                >
+                  Staff Links &#x25BC;
+                </button>
+                {dropdownOpen && (
+                  <div
+                    className="dropdown-menu"
+                    style={{ position: 'absolute', background: '#fff', minWidth: 160, boxShadow: '0 2px 8px rgba(0,0,0,0.15)', zIndex: 100, borderRadius: 4 }}
+                    role="menu"
+                  >
+                    <Link to="/nurse-vitals" className="nav-link" style={{ display: 'block', padding: 8, color: '#0369a1' }} role="menuitem">Nurse Vitals</Link>
+                    <Link to="/doctorspage" className="nav-link" style={{ display: 'block', padding: 8, color: '#0369a1' }} role="menuitem">Doctors</Link>
+                    <Link to="/frontdesk-appointment" className="nav-link" style={{ display: 'block', padding: 8, color: '#0369a1' }} role="menuitem">Front Desk Appointment</Link>
+                  </div>
+                )}
+              </div>
               <button className="btn btn-ghost" onClick={onSignOut}>Sign out</button>
             </>
           ) : (
@@ -77,10 +122,11 @@ function Footer() {
   return (
     <footer className="site-footer">
       <div className="container footer-inner">
-        <small>© {new Date().getFullYear()} SoftBuy — Built with care</small>
+        <small>© {new Date().getFullYear()} Oniru health Center</small>
         <div className="footer-links">
-          <a href="mailto:hello@example.com">Contact</a>
+          <a href="saremu9@gmail.com">Contact</a>
           <a href="/privacy">Privacy</a>
+          
         </div>
       </div>
     </footer>
@@ -139,6 +185,7 @@ function AppContent() {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/appointments" element={<AppointmentsPage />} />

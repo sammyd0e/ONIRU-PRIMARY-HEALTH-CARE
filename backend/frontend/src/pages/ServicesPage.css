@@ -12,8 +12,12 @@
 }
 
 .lead {
-  color: #6b7280;
+  color: rgb(0, 34, 255);
   margin: 0;
+  font-weight: 800;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+  font-size: 20px;
+  text-align: center;
 }
 
 .services-hero .service-illus {
@@ -36,7 +40,7 @@
 }
 
 .service-card {
-  background: rgb(0, 0, 255);
+  background: #2563eb;
   border-radius: 10px;
   padding: 16px;
   box-shadow: 0 6px 18px rgba(22,39,75,0.06);

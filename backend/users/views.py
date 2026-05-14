@@ -1,3 +1,35 @@
+from django.core.mail import send_mail
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
+# Forgot Password API view
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def forgot_password(request):
+	email = request.data.get('email')
+	if not email:
+		return Response({'error': 'Email is required.'}, status=status.HTTP_400_BAD_REQUEST)
+	User = get_user_model()
+	try:
+		user = User.objects.get(email=email)
+	except User.DoesNotExist:
+		return Response({'error': 'User with this email does not exist.'}, status=status.HTTP_404_NOT_FOUND)
+
+	# Generate a new random password
+	new_password = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
+	user.set_password(new_password)
+	user.save()
+
+	# Send the new password to the user's email
+	subject = 'Your Password Reset Request'
+	message = f'Your new password is: {new_password}\nPlease log in and change it immediately.'
+	from_email = getattr(settings, 'DEFAULT_FROM_EMAIL', 'no-reply@example.com')
+	try:
+		send_mail(subject, message, from_email, [email], fail_silently=False)
+	except Exception as e:
+		return Response({'error': f'Failed to send email: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+	return Response({'success': 'A new password has been sent to your email.'}, status=status.HTTP_200_OK)
 from django.contrib.auth import get_user_model
 from rest_framework import generics
 from .serializers import SignupSerializer

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import './FrontDeskLoginPage.css';
+
 // Hardcoded front desk credentials (replace with secure backend validation in production)
 const FRONTDESK_USERNAME = 'frontdesk';
 const FRONTDESK_PASSWORD = 'front2026';

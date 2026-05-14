@@ -89,11 +89,15 @@ export default function Login() {
               )}
             </button>
             <button type="button" className="btn btn-link" onClick={() => navigate('/signup')}>Create account</button>
+            <button type="button" className="btn btn-linkk" onClick={() => navigate('/')}>Home</button>
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn btn-link" onClick={() => navigate('/forgot-password')}>Forgot Password?</button>
           </div>
         </form>
 
         <footer className="login-footer">
-          <small className="muted">Forgot password? Contact support to reset your account.</small>
+          <small className="muted">Forgot password? Use the link above to reset your password.</small>
         </footer>
       </div>
     </div>

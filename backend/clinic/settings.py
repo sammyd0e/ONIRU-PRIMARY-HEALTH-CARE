@@ -1,3 +1,11 @@
+# Email backend settings for password reset
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  # Or your SMTP server
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'saremu9@gmail.com'  # Replace with your email
+EMAIL_HOST_PASSWORD = 'ysde pwhc nvuk gmem'  # Replace with your email password or app password
+DEFAULT_FROM_EMAIL = 'no-reply@oniruhealth.com'
 """
 Django settings for clinic project.
 

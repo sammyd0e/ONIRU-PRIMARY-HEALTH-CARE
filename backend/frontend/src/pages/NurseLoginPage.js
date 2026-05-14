@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import './NurseLoginPage.css';
+
 // Hardcoded nurse credentials (replace with secure backend validation in production)
 const NURSE_USERNAME = 'nurse';
 const NURSE_PASSWORD = 'vitals2026';
@@ -24,7 +26,7 @@ export default function NurseLoginPage() {
 
   return (
     <div className="nurse-login-container">
-      <h2>Nurse Vitals Login</h2>
+      <h2>Nurse Login</h2>
       <form onSubmit={handleSubmit}>
         <div>
           <label>Username:</label>
