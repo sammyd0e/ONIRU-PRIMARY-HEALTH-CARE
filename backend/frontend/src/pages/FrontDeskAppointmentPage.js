@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { getAuthHeaders } from '../api';
 import './FrontDeskAppointmentPage.css';
 import { useNavigate } from 'react-router-dom';
+
 export default FrontDeskAppointmentPage;
 
 
@@ -20,7 +21,7 @@ const APPOINTMENT_PRICES = {
   // Add more as needed
 };
 
-function FrontDeskAppointmentPage() {
+function FrontDeskAppointmentPage(){
   const [clinicId, setClinicId] = useState('');
   const [appointmentDetails, setAppointmentDetails] = useState(null);
   const [appointmentType, setAppointmentType] = useState('');
@@ -148,39 +149,92 @@ function FrontDeskAppointmentPage() {
   };
 
   return (
-    <div className="frontdesk-appointment-page">
-      {/* ...existing JSX code... */}
-      <h2>Front Desk Appointment Entry</h2>
-      <div className="daily-count-section" style={{marginBottom: '1.5rem',   background: '#000000', padding: '1rem', borderRadius: 8}}>
-        <h4 style={{marginBottom:8}}>Today's Patient Count by Service</h4>
-        {loadingCount ? (
-          <div style={{color:'#888'}}>Loading...</div>
-        ) : dailyCount && Object.keys(dailyCount).length > 0 ? (
-          <ul style={{paddingLeft:18, margin:0}}>
-            {Object.entries(dailyCount).map(([service, count]) => (
-              <li key={service}><b>{service}:</b> {count}</li>
-            ))}
-          </ul>
-        ) : (
-          <div style={{color:'#888'}}>No records for today yet.</div>
-        )}
-      </div>
-      <form onSubmit={handleSubmit}>
-        {/* ...existing form JSX... */}
-        <label>
-          Sex:
-          <select
-            value={sex}
-            onChange={e => setSex(e.target.value)}
-            required
-            style={{ marginLeft: 8 }}
-          >
-            <option value="">Select</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-        </label>
+    <>
+      <div className="frontdesk-appointment-page">
+        {/* ...existing JSX code... */}
+        <h2>Front Desk Appointment Entry</h2>
+        <div className="daily-count-section" style={{marginBottom: '1.5rem',   background: '#000000', padding: '1rem', borderRadius: 8}}>
+          <h4 style={{marginBottom:8}}>Today's Patient Count by Service</h4>
+          {loadingCount ? (
+            <div style={{color:'#888'}}>Loading...</div>
+          ) : dailyCount && Object.keys(dailyCount).length > 0 ? (
+            <ul style={{paddingLeft:18, margin:0}}>
+              {Object.entries(dailyCount).map(([service, count]) => (
+                <li key={service}><b>{service}:</b> {count}</li>
+              ))}
+            </ul>
+          ) : (
+            <div style={{color:'#888'}}>No records for today yet.</div>
+          )}
+        </div>
+        <form onSubmit={handleSubmit}>
+          {/* ...existing form JSX... */}
+          <label>
+            Sex:
+            <select
+                  value={sex}
+                  onChange={e => setSex(e.target.value)}
+                  required
+                  style={{ marginLeft: 8 }}
+                >
+                  <option value="">Select</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                    </select>
+                    </label>
+                    <label>
+                   Amount Paid:
+                   <input
+                    type="number"
+                    value={amount}
+                    onChange={e => setAmount(e.target.value)}
+                    required
+                    min="0"
+                    disabled={autoFetched}
+                  />
+                </label>
+                <label>
+                  Appointment Date:
+                  <input
+                    type="date"
+                    value={scheduledDate}
+                    onChange={e => setScheduledDate(e.target.value)}
+                    required
+                  />
+                </label>
+                <label>
+                  Appointment Time:
+                  <input
+                    type="time"
+                    value={scheduledTime}
+                    onChange={e => setScheduledTime(e.target.value)}
+                    required
+                  />
+                </label>
+                <div className="payment-method-buttons">
+                  <button
+                    type="button"
+                    className={paymentMethod === 'cash' ? 'selected' : ''}
+                    onClick={() => setPaymentMethod('cash')}
+                  >
+                    Paid by Cash
+                  </button>
+                  <button
+                    type="button"
+                    className={paymentMethod === 'transfer' ? 'selected' : ''}
+                    onClick={() => setPaymentMethod('transfer')}
+                  >
+                    Paid by Transfer
+                  </button>
+                </div>
+                <button type="submit" disabled={submitting}>
+                  {submitting ? 'Submitting...' : 'Submit'}
+                </button>
+                {error && <div className="error">{error}</div>}
+              </form>
+            </div>
+          
         <br />
         <label>
           Clinic ID:
@@ -215,180 +269,9 @@ function FrontDeskAppointmentPage() {
               <option key={type} value={type}>{type}</option>
             ))}
           </select>
-        </label>
-        <label>
-          Amount Paid:
-          <input
-            type="number"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            required
-            min="0"
-            disabled={autoFetched}
-          />
-        </label>
-        <label>
-          Appointment Date:
-          <input
-            type="date"
-            value={scheduledDate}
-            onChange={e => setScheduledDate(e.target.value)}
-            required
-          />
-        </label>
-        <label>
-          Appointment Time:
-          <input
-            type="time"
-            value={scheduledTime}
-            onChange={e => setScheduledTime(e.target.value)}
-            required
-          />
-        </label>
-        <div className="payment-method-buttons">
-          <button
-            type="button"
-            className={paymentMethod === 'cash' ? 'selected' : ''}
-            onClick={() => setPaymentMethod('cash')}
-          >
-            Paid by Cash
-          </button>
-          <button
-            type="button"
-            className={paymentMethod === 'transfer' ? 'selected' : ''}
-            onClick={() => setPaymentMethod('transfer')}
-          >
-            Paid by Transfer
-          </button>
-        </div>
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Submitting...' : 'Submit'}
-        </button>
-        {error && <div className="error">{error}</div>}
-      </form>
-    </div>
+
+    </label>
+</>
   );
-  
-
-    <div className="frontdesk-appointment-page">
-      <h2>Front Desk Appointment Entry</h2>
-      <div className="daily-count-section" style={{marginBottom:            '1.5rem',   background: '#000000', padding: '1rem', borderRadius: 8}}>
-        <h4 style={{marginBottom:8}}>Today's Patient Count by Service</h4>
-        {loadingCount ? (
-          <div style={{color:'#888'}}>Loading...</div>
-        ) : dailyCount && Object.keys(dailyCount).length > 0 ? (
-          <ul style={{paddingLeft:18, margin:0}}>
-            {Object.entries(dailyCount).map(([service, count]) => (
-              <li key={service}><b>{service}:</b> {count}</li>
-            ))}
-          </ul>
-        ) : (
-          <div style={{color:'#888'}}>No records for today yet.</div>
-        )}
-      </div>
-      <form onSubmit={handleSubmit}>
-        <label>
-          Sex:
-          <select
-            value={sex}
-            onChange={e => setSex(e.target.value)}
-            required
-            style={{ marginLeft: 8 }}
-          >
-            <option value="">Select</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-            <option value="Other">Other</option>
-          </select>
-        </label>
-        <br />
-        <label>
-          Clinic ID:
-          <input
-            type="text"
-            value={clinicId}
-            onChange={e => setClinicId(e.target.value)}
-            required
-            autoFocus
-          />
-        </label>
-        {fetchingDetails && clinicId && (
-          <div style={{color:'#888',margin:'8px 0'}}>Fetching appointment details...</div>
-        )}
-        {autoFetched && (
-          <div className="auto-details" style={{background:'#2b00ff',padding:'12px',borderRadius:'6px',marginBottom:'12px'}}>
-            <div><b>Patient Name:</b> {patientName}</div>
-            <div><b>Appointment Type:</b> {appointmentType}</div>
-          </div>
-        )}
-        <label>
-          Appointment Type:
-          <select
-            value={appointmentType}
-            onChange={e => {
-              setAppointmentType(e.target.value);
-              setAmount(APPOINTMENT_PRICES[e.target.value] || '');
-            }}
-            disabled={autoFetched}
-          >
-            {APPOINTMENT_TYPES.map(type => (
-              <option key={type} value={type}>{type}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Amount Paid:
-          <input
-            type="number"
-            value={amount}
-            onChange={e => setAmount(e.target.value)}
-            required
-            min="0"
-            disabled={autoFetched}
-          />
-        </label>
-        <label>
-          Appointment Date:
-          <input
-            type="date"
-            value={scheduledDate}
-            onChange={e => setScheduledDate(e.target.value)}
-            required
-          />
-        </label>
-        <label>
-          Appointment Time:
-          <input
-            type="time"
-            value={scheduledTime}
-            onChange={e => setScheduledTime(e.target.value)}
-            required
-          />
-        </label>
-        <div className="payment-method-buttons">
-          <button
-            type="button"
-            className={paymentMethod === 'cash' ? 'selected' : ''}
-            onClick={() => setPaymentMethod('cash')}
-          >
-            Paid by Cash
-          </button>
-          <button
-            type="button"
-            className={paymentMethod === 'transfer' ? 'selected' : ''}
-            onClick={() => setPaymentMethod('transfer')}
-          >
-            Paid by Transfer
-          </button>
-        </div>
-        <button type="submit" disabled={submitting}>
-          {submitting ? 'Submitting...' : 'Submit'}
-        </button>
-        {error && <div className="error">{error}</div>}
-      </form>
-    </div>
-    
-  
-  
 }
-
+  

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchPatientDiagnosesAndResults, updatePatientDiagnosisOrResult } from '../api.nurseDiagnosis';
+
 import { addDiagnosisOrTestResult } from '../api.nurseDiagnosisAdd';
 import { deleteDiagnosisOrTestResult } from '../api.nurseDiagnosisDelete';
 import './NurseVitalsPage.css';
@@ -63,7 +64,7 @@ export default function NurseVitalsPage() {
   });
 
   const [msg, setMsg] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [setLoading] = (false);
   const [error, setError] = useState('');
 
   // Diagnoses & Test Results state

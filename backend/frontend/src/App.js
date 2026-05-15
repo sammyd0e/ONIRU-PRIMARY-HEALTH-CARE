@@ -38,11 +38,7 @@ function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll 
 
 
   // Helper to check staff roles
-  // Always show all staff links for any authenticated user
-  const isNurse = true;
-  const isDoctor = true;
-  const isFrontdesk = true;
-  const hasStaffRole = true;
+
 
   return (
     <header className="site-header">

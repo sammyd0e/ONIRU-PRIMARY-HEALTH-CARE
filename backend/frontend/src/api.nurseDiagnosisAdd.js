@@ -1,7 +1,6 @@
 import { getAuthHeaders } from './api';
 
 export async function addDiagnosisOrTestResult(type, clinicId, value) {
-  const token = window.localStorage.getItem('access');
   let url = '';
   let body = {};
   // Accept patientId as a fourth argument
