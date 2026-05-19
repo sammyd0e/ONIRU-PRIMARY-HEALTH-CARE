@@ -67,7 +67,7 @@ export default function ServicesPage() {
     <div className="services-page container">
       <header className="services-header">
         <div className='lead'>
-          <h1 className='generalll'>Our Services</h1>
+          <h1 className='general'>Our Services</h1>
           <p className="lead">Quality, compassionate care — choose a service and book an appointment online.</p>
         </div>
         <div className="services-hero" aria-hidden>

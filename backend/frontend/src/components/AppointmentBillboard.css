@@ -1,20 +1,22 @@
 .appointment-billboard {
-  background: #00080f;
+  background: #08b889;
   border-radius: 16px;
   box-shadow: 0 2px 16px rgba(0,0,0,0.08);
   padding: 32px 24px;
   margin-bottom: 32px;
+  width: fit-content;
 }
 .billboard-title {
   font-size: 1.6rem;
   color: #0e7490;
   margin-bottom: 18px;
   font-weight: 600;
+  text-align: center;
 }
 .billboard-section {
   margin-bottom: 24px;
   padding: 16px;
-  background: #050000;
+  background: #fbfbfb5c;
   border-radius: 8px;
   box-shadow: 0 1px 6px rgba(14,116,144,0.07);
 }

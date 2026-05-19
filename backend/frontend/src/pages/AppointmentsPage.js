@@ -110,7 +110,7 @@ export default function AppointmentsPage() {
             }
             return (
               <li key={a.id || idx} className="appointment-item" style={{position: 'relative'}}>
-                <pre className="appointment-json" style={{whiteSpace: 'pre-wrap', wordBreak: 'break-all', background: '#000000ff', padding: '1em', borderRadius: '6px'}}>
+                <pre className="appointment-json" style={{whiteSpace: 'pre-wrap', wordBreak: 'break-all', background: '#000000ff', padding: '1em', borderRadius: '6px'}}> 
                   {JSON.stringify(a, null, 2)}
                 </pre>
                 <button

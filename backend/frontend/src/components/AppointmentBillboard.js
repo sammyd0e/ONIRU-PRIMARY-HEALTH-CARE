@@ -49,18 +49,18 @@ export default function AppointmentBillboard() {
 
   return (
     <section className="appointment-billboard" id="billboard-section">
-      <h3 className="billboard-title">Upcoming Appointments Billboard</h3>
+      <h3 className="billboard-title">Track Your Appointment</h3>
       <div className="billboard-section">
-        <div className="billboard-section-title">All Upcoming Appointments</div>
+        <div className="billboard-section-title"></div>
         <div className="billboard-section-content">
           {appointments.length ? appointments.map(a => (
             <div className="billboard-row" key={a.id || a.key || Math.random()}>
               <span><b>Patient Name:</b> {a.patient_full_name || a.full_name || a.name || a.patient_name || a.patient}</span>{' '}
-              <span><b>Clinic:</b> {a.clinic_id}</span>{' '}
+              {/* <span><b>Clinic:</b> {a.clinic_id}</span>{' '} */}
               <span><b>Date:</b> {a.scheduled_date}</span>{' '}
               <span><b>Time:</b> {a.scheduled_time}</span>{' '}
-              <span><b>Status:</b> {a.status}</span>{' '}
-              <span><b>Note:</b> {a.note}</span>
+              {/* <span><b>Status:</b> {a.status}</span>{' '} */}
+              {/* <span><b>Note:</b> {a.note}</span> */}
             </div>
           )) : <div className="billboard-empty">No upcoming appointments</div>}
           {error && <div className="billboard-error">{error}</div>}
