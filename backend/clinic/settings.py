@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    # For static file serving in production
+    'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
     # Third-party apps
     'rest_framework_simplejwt',
@@ -52,8 +54,6 @@ INSTALLED_APPS = [
     # core clinical apps
     'appointments',
     'feedback',
-    # For static file serving in production
-    'whitenoise.runserver_nostatic',
 ]
 
 MIDDLEWARE = [
@@ -101,6 +101,11 @@ DATABASES = {
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
+
+# Static files (WhiteNoise settings)
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
