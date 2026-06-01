@@ -11,6 +11,10 @@ export async function deleteDiagnosisOrTestResult(type, id) {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
   });
-  if (!res.ok) throw new Error('Failed to delete');
+  if (!res.ok) {
+    const errorData = await res.json().catch(() => ({}));
+    console.error(`API Error (${res.status}):`, errorData);
+    throw new Error(`Failed to delete: ${res.status} - ${JSON.stringify(errorData)}`);
+  }
   return true;
 }

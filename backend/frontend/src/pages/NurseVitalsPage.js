@@ -26,32 +26,43 @@ export default function NurseVitalsPage() {
   const [newDiagLoading, setNewDiagLoading] = useState(false);
   const [newDiagError, setNewDiagError] = useState('');
 
-  // Add new diagnosis/test result handler
+  // Add new diagnosis/test result handler (refactored)
   async function handleAddDiagnosis(e) {
     e.preventDefault();
     if (!newDiagValue.trim()) {
       setNewDiagError('Please enter a value.');
       return;
     }
-    if (!clinicId) {
-      setNewDiagError('No clinic ID. Search for a patient first.');
-      return;
-    }
     if (!patient || !patient.id) {
       setNewDiagError('No patient selected. Search for a patient first.');
+      return;
+    }
+    const patientClinicId = patient.clinic_id || patient.clinicId;
+    if (!patientClinicId) {
+      setNewDiagError('Patient clinic ID not found.');
       return;
     }
     setNewDiagLoading(true);
     setNewDiagError('');
     try {
-      const data = await addDiagnosisOrTestResult(newDiagType, clinicId, newDiagValue, patient.id);
-      setDiagnoses([data, ...diagnoses]);
+      const patientId = typeof patient.user === 'object' ? patient.user?.id : patient.user || patient.id;
+      console.log('[DEBUG] Adding diagnosis for patient profile:', patient, 'using patientId:', patientId);
+      await addDiagnosisOrTestResult(newDiagType, patientClinicId, newDiagValue, patientId);
+      console.log('[DEBUG] Diagnosis added successfully, now re-fetching...');
+      // Always re-fetch latest diagnoses after add
+      setDiagnosisLoading(true);
+      const d = await fetchPatientDiagnosesAndResults(patientClinicId);
+      console.log('[DEBUG] Re-fetched diagnoses:', d);
+      setDiagnoses(Array.isArray(d) ? d : []);
+      setDiagnosisError('');
       setNewDiagValue('');
       setNewDiagType('Diagnosis');
-    } catch {
-      setNewDiagError('Failed to add.');
+    } catch (err) {
+      console.error('Add diagnosis error:', err);
+      setNewDiagError(err.message || 'Failed to add.');
     }
     setNewDiagLoading(false);
+    setDiagnosisLoading(false);
   }
   const [clinicId, setClinicId] = useState('');
   const [patient, setPatient] = useState(null);
@@ -64,7 +75,7 @@ export default function NurseVitalsPage() {
   });
 
   const [msg, setMsg] = useState('');
-  const [setLoading] = (false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Diagnoses & Test Results state
@@ -91,8 +102,10 @@ export default function NurseVitalsPage() {
         }
       );
       const data = await res.json();
+      console.log('[DEBUG] Patient profile response:', data);
       if (res.ok && data.profile) {
         setPatient(data.profile);
+        console.log('[DEBUG] Patient clinic_id:', data.profile.clinic_id || data.profile.clinicId);
         setVitals({
           bloodPressure: data.profile.bloodPressure || '',
           sugarLevel: data.profile.sugarLevel || '',
@@ -107,15 +120,17 @@ export default function NurseVitalsPage() {
         setError(data.error || 'Patient not found.');
       }
       // Fetch diagnoses & test results for this patient
-      if (res.ok && data.profile && data.profile.clinicId) {
+      if (res.ok && data.profile && (data.profile.clinic_id || data.profile.clinicId)) {
         setDiagnosisLoading(true);
-        fetchPatientDiagnosesAndResults(data.profile.clinicId)
+        fetchPatientDiagnosesAndResults(data.profile.clinic_id || data.profile.clinicId)
           .then((d) => {
+            console.log('[DEBUG] Fetched diagnoses:', d);
             setDiagnoses(Array.isArray(d) ? d : []);
             setDiagnosisLoading(false);
             setDiagnosisError('');
           })
-          .catch(() => {
+          .catch((err) => {
+            console.error('[DEBUG] Error fetching diagnoses:', err);
             setDiagnoses([]);
             setDiagnosisError('Could not load diagnoses or test results.');
             setDiagnosisLoading(false);
@@ -124,6 +139,7 @@ export default function NurseVitalsPage() {
         setDiagnoses([]);
       }
     } catch (err) {
+      console.error('[DEBUG] Search error:', err);
       setError('Network error.');
       setPatient(null);
     }
@@ -243,12 +259,19 @@ export default function NurseVitalsPage() {
                       <button className="btn" style={{ marginRight: 8 }} onClick={async () => {
                         try {
                           await updatePatientDiagnosisOrResult(d.type, d.id, editDiagnosisValue);
-                          setDiagnoses(diagnoses.map(x => x.id === d.id ? { ...x, label: editDiagnosisValue, result: editDiagnosisValue } : x));
+                          // Always re-fetch latest diagnoses after edit
+                          const patientClinicId = patient?.clinic_id || patient?.clinicId;
+                          setDiagnosisLoading(true);
+                          const updated = await fetchPatientDiagnosesAndResults(patientClinicId);
+                          setDiagnoses(Array.isArray(updated) ? updated : []);
+                          setDiagnosisError('');
                           setEditDiagnosisId(null);
                           setEditDiagnosisValue('');
-                        } catch {
-                          alert('Failed to update.');
+                        } catch (err) {
+                          console.error('Update error:', err);
+                          setDiagnosisError('Failed to update.');
                         }
+                        setDiagnosisLoading(false);
                       }}>Save</button>
                       <button className="btn" onClick={() => { setEditDiagnosisId(null); setEditDiagnosisValue(''); }}>Cancel</button>
                     </>
@@ -259,10 +282,17 @@ export default function NurseVitalsPage() {
                         if (window.confirm('Are you sure you want to delete this item?')) {
                           try {
                             await deleteDiagnosisOrTestResult(d.type, d.id);
-                            setDiagnoses(diagnoses.filter(x => x.id !== d.id));
-                          } catch {
-                            alert('Failed to delete.');
+                            // Always re-fetch latest diagnoses after delete
+                            const patientClinicId = patient?.clinic_id || patient?.clinicId;
+                            setDiagnosisLoading(true);
+                            const updated = await fetchPatientDiagnosesAndResults(patientClinicId);
+                            setDiagnoses(Array.isArray(updated) ? updated : []);
+                            setDiagnosisError('');
+                          } catch (err) {
+                            console.error('Delete error:', err);
+                            setDiagnosisError('Failed to delete.');
                           }
+                          setDiagnosisLoading(false);
                         }
                       }}>Delete</button>
                     </>
