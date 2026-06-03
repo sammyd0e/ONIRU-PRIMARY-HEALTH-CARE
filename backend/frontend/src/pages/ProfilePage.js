@@ -95,6 +95,7 @@ export default function ProfilePage({ profileOverride }) {
   const [children, setChildren] = React.useState([]);
   const [loadingProfile, setLoadingProfile] = React.useState(profileOverride ? false : true);
   // State for diagnoses and test results
+
   const [diagnosisData, setDiagnosisData] = useState([]);
   const [diagnosisLoading, setDiagnosisLoading] = useState(true);
   const [diagnosisError, setDiagnosisError] = useState(null);
@@ -112,6 +113,7 @@ export default function ProfilePage({ profileOverride }) {
   // Debug: Show access token status
   const accessToken = window.localStorage.getItem('access');
   console.log('[DEBUG] Access token:', accessToken);
+  
   // Show a visible warning if the access token is missing or looks invalid
   const isTokenMissing = !accessToken || accessToken.length < 10;
 

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
 import { createChildAppointment } from '../api';
 
-export default function ChildProfilePage({ child }) {
+export default function ChildProfilePage ({ child }) {
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
   const [reason, setReason] = useState('');
   const [statusMsg, setStatusMsg] = useState('');
+  
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async e => {

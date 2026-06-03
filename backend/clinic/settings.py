@@ -177,6 +177,7 @@ CORS_ALLOWED_ORIGINS = [
     'http://172.20.10.2:3000',
     'https://phconiru.netlify.app',
     'http://172.20.10.7:3000',
+    'https://phconiru.netlify.app',
 ]
 
 # Use the custom user model defined in the users app
