@@ -75,7 +75,7 @@ export default function NurseVitalsPage() {
   });
 
   const [msg, setMsg] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   // Diagnoses & Test Results state
