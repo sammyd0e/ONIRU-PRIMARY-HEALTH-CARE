@@ -12,7 +12,7 @@ export default function AppointmentBillboard() {
     // Fetch all appointments from backend with authentication
     const token = localStorage.getItem('access');
     console.log('AppointmentBillboard: Using token:', token);
-    fetch('http://localhost:8000/api/appointments/upcoming/', {
+    fetch('https://django-backend-wxbr.onrender.com/api/appointments/upcoming/', {
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
         'Content-Type': 'application/json',
