@@ -162,5 +162,17 @@ export async function uploadProfilePicture(file) {
   return res.json();
 }
 
+// Forgot password endpoint
+export async function forgotPassword(email) {
+  const API_BASE = process.env.REACT_APP_API_BASE || '';
+  const res = await fetch(`${API_BASE}/api/forgot-password/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  const body = await res.json().catch(() => null);
+  return { ok: res.ok, status: res.status, body };
+}
+
 const api = { login, fetchServices, createAppointment, deleteAppointment, deleteArthnatalBooking, uploadProfilePicture };
 export default api;

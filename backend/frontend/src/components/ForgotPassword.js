@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { forgotPassword } from '../api';
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState('');
@@ -14,16 +15,11 @@ export default function ForgotPassword() {
     setMessage('');
     setLoading(true);
     try {
-      const res = await fetch('/api/forgot-password/', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setMessage(data.success || 'Check your email for a new password.');
+      const { ok, body } = await forgotPassword(email);
+      if (ok) {
+        setMessage(body?.success || 'Check your email for a new password.');
       } else {
-        setError(data.error || 'Unable to reset password.');
+        setError(body?.error || 'Unable to reset password.');
       }
     } catch (err) {
       setError('Network error. Please try again.');

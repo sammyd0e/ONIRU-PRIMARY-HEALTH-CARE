@@ -2,3 +2,6 @@
   base    = "backend/frontend"
   command = "npm run build"
   publish = "build"
+
+[build.environment]
+  REACT_APP_API_BASE = "https://django-backend-wxbr.onrender.com"
