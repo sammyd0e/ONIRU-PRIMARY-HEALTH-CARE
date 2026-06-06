@@ -98,6 +98,12 @@ class SignupView(APIView):
 
         # Create user - using create_user to hash password
         user = User.objects.create_user(**create_kwargs)
+        
+        # Save phone number to user model
+        phone = data.get('phone')
+        if phone:
+            user.phone_number = phone
+            user.save()
 
         patient = PatientProfile.objects.create(
             user=user,

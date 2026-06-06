@@ -96,8 +96,8 @@ export default function SignupPage() {
             console.warn('Signup succeeded but response was not JSON', e);
           }
           setSuccess(true);
-          // Redirect to the profile page to show the submitted information
-          setTimeout(() => navigate('/profile'), 800);
+          // Redirect to the login page after successful signup
+          setTimeout(() => navigate('/login'), 800);
           return;
         }
 
