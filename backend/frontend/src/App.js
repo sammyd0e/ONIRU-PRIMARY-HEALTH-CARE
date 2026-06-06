@@ -41,27 +41,35 @@ function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll 
 
 
   return (
-    <header className="site-header">
-      <div className="container header-inner">
-        <div className="brand">
-          <img className="brand-logo" src={process.env.PUBLIC_URL + '/onirulogo.jpg'} alt="Oniru logo" />
-          <Link to="/services" className="brand-link">
-            <h1>Oniru Health Center</h1>
-            <p className="tagline">Providing top-notch medical care</p>
-          </Link>
-        </div>
-
-        <button
-          className={`nav-toggle ${menuOpen ? 'open' : ''}`}
-          aria-label="Toggle navigation"
+    <>
+      {menuOpen && (
+        <div 
+          className="nav-backdrop" 
           onClick={onToggleMenu}
-        >
-          <span />
-          <span />
-          <span />
-        </button>
+          aria-label="Close menu"
+        />
+      )}
+      <header className="site-header">
+        <div className="container header-inner">
+          <div className="brand">
+            <img className="brand-logo" src={process.env.PUBLIC_URL + '/onirulogo.jpg'} alt="Oniru logo" />
+            <Link to="/services" className="brand-link">
+              <h1>Oniru Health Center</h1>
+              <p className="tagline">Providing top-notch medical care</p>
+            </Link>
+          </div>
 
-        <nav className={`site-nav ${menuOpen ? 'open' : ''}`} aria-label="Main navigation">
+          <button
+            className={`nav-toggle ${menuOpen ? 'open' : ''}`}
+            aria-label="Toggle navigation"
+            onClick={onToggleMenu}
+          >
+            <span />
+            <span />
+            <span />
+          </button>
+
+          <nav className={`site-nav ${menuOpen ? 'open' : ''}`} aria-label="Main navigation">
           <Link to="/" className="nav-link">Home</Link>
           <Link to="/services" className="nav-link">Services</Link>
           <Link to="/appointments" className="nav-link">Appointments</Link>
@@ -107,9 +115,10 @@ function Header({ isAuth, onSignOut, onToggleMenu, menuOpen, handleNavAndScroll 
               className="btn nav-anim signup-btn"
               onClick={() => handleNavAndScroll('/signup', 'signup-section')}
             >Sign up</button>
-        </nav>
-      </div>
-    </header>
+          </nav>
+        </div>
+      </header>
+    </>
   );
 }
 
