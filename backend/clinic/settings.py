@@ -42,7 +42,6 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     # For static file serving in production
-    'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
     # Third-party apps
     'rest_framework_simplejwt',
@@ -55,6 +54,13 @@ INSTALLED_APPS = [
     'appointments',
     'feedback',
 ]
+
+# Add whitenoise if available
+try:
+    import whitenoise
+    INSTALLED_APPS.insert(9, 'whitenoise.runserver_nostatic')
+except ImportError:
+    pass
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
@@ -105,7 +111,13 @@ DATABASES = {
 # Static files (WhiteNoise settings)
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Use WhiteNoise storage if available, otherwise use default
+try:
+    import whitenoise
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+except ImportError:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 AUTH_PASSWORD_VALIDATORS = [
     {

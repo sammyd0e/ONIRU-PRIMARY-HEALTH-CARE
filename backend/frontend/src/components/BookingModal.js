@@ -182,22 +182,21 @@ export default function BookingModal({ open, service, onClose, onBooked, hasPend
         <button
           type="button"
           className="modal-cancel-btn"
-          aria-label="Cancel booking"
+          aria-label="Close booking modal"
           onClick={onClose}
         >
-          <span aria-hidden="true">&times;</span>
+          ✕
         </button>
         <div className="modal-header">
           <div className="modal-icon">
-            <span role="img" aria-label="calendar" style={{fontSize:'2rem'}}>📅</span>
+            <span role="img" aria-label="calendar">📅</span>
           </div>
-          <div>
-            <h3 style={{marginBottom:4, fontWeight:700, fontSize:'1.5rem', color:'#1976d2', letterSpacing:'0.01em'}}>Book Appointment</h3>
-            <p className="muted" style={{marginBottom:0, fontSize:'1.08rem'}}>Fill in the details below to book your appointment.</p>
+          <div className="modal-title-group">
+            <h3>Book Appointment</h3>
+            <p className="modal-subtitle">Fill in your details to schedule</p>
           </div>
         </div>
-        <hr className="modal-divider" />
-        <div className="form-section row">
+        <div className="form-section">
           <div className="row">
             <label htmlFor="sb-clinic">Clinic ID <span className="required">*</span></label>
             <input
