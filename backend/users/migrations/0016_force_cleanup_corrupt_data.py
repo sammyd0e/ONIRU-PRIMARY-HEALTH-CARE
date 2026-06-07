@@ -15,13 +15,13 @@ class Migration(migrations.Migration):
         migrations.RunSQL(
             sql="""
             -- Delete ChildAccounts referencing PatientProfiles with NULL user first
-            DELETE FROM users_child_account 
+            DELETE FROM child_account 
             WHERE child_profile_id IN (
-                SELECT id FROM users_patient_profile WHERE user_id IS NULL
+                SELECT id FROM patient_profile WHERE user_id IS NULL
             );
             
             -- Delete PatientProfiles with NULL user
-            DELETE FROM users_patient_profile 
+            DELETE FROM patient_profile 
             WHERE user_id IS NULL;
             """,
             reverse_sql="-- Cleanup is irreversible"
