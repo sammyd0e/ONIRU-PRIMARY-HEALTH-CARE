@@ -158,9 +158,7 @@ class PatientProfile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='patient_profile',
-        blank=True,
-        null=True
+        related_name='patient_profile'
     )
 
     sex = models.CharField(max_length=20, choices=SEX_CHOICES, blank=True, null=True)
