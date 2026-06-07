@@ -2,10 +2,35 @@ from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
+from django import forms
 from .models import User, SellerProfile, Address, PatientProfile, ChildAccount
+
+
+class PatientProfileForm(forms.ModelForm):
+    """Custom form for PatientProfile that validates FK relationships."""
+    class Meta:
+        model = PatientProfile
+        fields = '__all__'
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        user = cleaned_data.get('user')
+        
+        # If we're editing an existing PatientProfile
+        if self.instance.pk:
+            # Check if this PatientProfile has a related ChildAccount
+            has_child_account = ChildAccount.objects.filter(child_profile_id=self.instance.pk).exists()
+            if user is None and has_child_account:
+                raise ValidationError(
+                    'Cannot clear the user field: this PatientProfile is linked to a Child Account. '
+                    'Either delete the Child Account first or keep the user assigned.'
+                )
+        
+        return cleaned_data
 # Register PatientProfile for admin display
 @admin.register(PatientProfile)
 class PatientProfileAdmin(admin.ModelAdmin):
+    form = PatientProfileForm
     list_display = (
         'user', 'first_name', 'last_name', 'sex', 'blood_group', 'dob', 'state_of_origin', 'next_of_kin', 'house_address', 'clinic_id', 'created_at', 'updated_at'
     )
@@ -34,21 +59,13 @@ class PatientProfileAdmin(admin.ModelAdmin):
         }),
     )
     
-    def save_model(self, request, obj, form, change):
-        """Override save to handle cascade constraints properly."""
-        try:
-            super().save_model(request, obj, form, change)
-        except Exception as e:
-            if 'FOREIGN KEY constraint failed' in str(e):
-                # If there's a FK constraint error, ensure user field is not being cleared
-                # when there's a related ChildAccount
-                if obj.user is None and hasattr(obj, 'parent_link'):
-                    from django.contrib.admin import SimpleListFilter
-                    raise ValueError(
-                        'Cannot clear the user field for a PatientProfile that is linked to a Child Account. '
-                        'Either delete the related Child Account first, or keep the user field populated.'
-                    )
-                raise
+    def get_readonly_fields(self, request, obj=None):
+        """Make user field readonly if PatientProfile has a related ChildAccount."""
+        readonly = list(super().get_readonly_fields(request, obj))
+        if obj and ChildAccount.objects.filter(child_profile_id=obj.pk).exists():
+            if 'user' not in readonly:
+                readonly.append('user')
+        return readonly
 
 @admin.register(User)
 class CustomerAdmin(UserAdmin):
