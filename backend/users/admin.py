@@ -16,6 +16,13 @@ class PatientProfileForm(forms.ModelForm):
         cleaned_data = super().clean()
         user = cleaned_data.get('user')
         
+        # CRITICAL: user field is now required - don't allow NULL
+        if user is None:
+            raise ValidationError(
+                'The user field is required. PatientProfile must always be linked to a User. '
+                'If this is a corrupted record, please contact an administrator.'
+            )
+        
         # If we're editing an existing PatientProfile
         if self.instance.pk:
             # Check if this PatientProfile has a related ChildAccount
@@ -66,6 +73,21 @@ class PatientProfileAdmin(admin.ModelAdmin):
             if 'user' not in readonly:
                 readonly.append('user')
         return readonly
+    
+    def save_model(self, request, obj, form, change):
+        """Override save to catch and report FK constraint errors."""
+        try:
+            super().save_model(request, obj, form, change)
+        except Exception as e:
+            error_msg = str(e).lower()
+            if 'foreign key' in error_msg or 'constraint' in error_msg:
+                # This is likely a FK constraint violation
+                raise ValidationError(
+                    f'Database constraint violation: {e}. '
+                    f'This usually means there is corrupted data. '
+                    f'Please contact an administrator with error ID: {obj.id}'
+                )
+            raise
 
 @admin.register(User)
 class CustomerAdmin(UserAdmin):

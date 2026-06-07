@@ -6,38 +6,51 @@ from django.db import migrations, connection
 def fix_fk_constraints(apps, schema_editor):
     """
     Clean up corrupted data that violates FK constraints.
-    This handles cases where PatientProfile has NULL user but is referenced by ChildAccount.
+    Works with both SQLite and PostgreSQL.
     """
-    if schema_editor.connection.vendor == 'sqlite':
-        # SQLite specific: temporarily disable FK constraint checks
+    db_vendor = schema_editor.connection.vendor
+    
+    if db_vendor == 'sqlite':
+        # SQLite: disable FK checks temporarily
         with connection.cursor() as cursor:
             cursor.execute('PRAGMA foreign_keys = OFF')
-    
-    # Get the models
-    ChildAccount = apps.get_model('users', 'ChildAccount')
-    PatientProfile = apps.get_model('users', 'PatientProfile')
-    
-    # Step 1: Find and delete ChildAccounts that reference PatientProfiles with NULL user
-    bad_child_accounts = []
-    for ca in ChildAccount.objects.all():
-        if ca.child_profile and ca.child_profile.user is None:
-            bad_child_accounts.append(ca.id)
-    
-    if bad_child_accounts:
-        print(f"Deleting {len(bad_child_accounts)} ChildAccounts with NULL user references...")
-        ChildAccount.objects.filter(id__in=bad_child_accounts).delete()
-    
-    # Step 2: Find and delete PatientProfiles with NULL user
-    null_user_profiles = PatientProfile.objects.filter(user__isnull=True)
-    if null_user_profiles.exists():
-        count = null_user_profiles.count()
-        print(f"Deleting {count} PatientProfiles with NULL user field...")
-        null_user_profiles.delete()
-    
-    if schema_editor.connection.vendor == 'sqlite':
-        # Re-enable FK constraint checks
+    elif db_vendor == 'postgresql':
+        # PostgreSQL: disable triggers
         with connection.cursor() as cursor:
-            cursor.execute('PRAGMA foreign_keys = ON')
+            cursor.execute('ALTER TABLE child_account DISABLE TRIGGER ALL')
+            cursor.execute('ALTER TABLE patient_profile DISABLE TRIGGER ALL')
+    
+    try:
+        # Get the models
+        ChildAccount = apps.get_model('users', 'ChildAccount')
+        PatientProfile = apps.get_model('users', 'PatientProfile')
+        
+        # Step 1: Delete ChildAccounts that reference PatientProfiles with NULL user
+        bad_child_accounts = ChildAccount.objects.filter(child_profile__user__isnull=True)
+        if bad_child_accounts.exists():
+            count = bad_child_accounts.count()
+            print(f"\nDELETING {count} ChildAccounts with NULL user references...")
+            bad_child_accounts.delete()
+            print(f"✓ Deleted {count} ChildAccounts\n")
+        
+        # Step 2: Delete PatientProfiles with NULL user
+        null_user_profiles = PatientProfile.objects.filter(user__isnull=True)
+        if null_user_profiles.exists():
+            count = null_user_profiles.count()
+            print(f"DELETING {count} PatientProfiles with NULL user field...")
+            for profile in null_user_profiles:
+                print(f"  - Profile ID: {profile.id}, clinic_id: {profile.clinic_id}")
+            null_user_profiles.delete()
+            print(f"✓ Deleted {count} PatientProfiles\n")
+    finally:
+        # Re-enable constraints
+        if db_vendor == 'sqlite':
+            with connection.cursor() as cursor:
+                cursor.execute('PRAGMA foreign_keys = ON')
+        elif db_vendor == 'postgresql':
+            with connection.cursor() as cursor:
+                cursor.execute('ALTER TABLE patient_profile ENABLE TRIGGER ALL')
+                cursor.execute('ALTER TABLE child_account ENABLE TRIGGER ALL')
 
 
 def reverse_fix(apps, schema_editor):
