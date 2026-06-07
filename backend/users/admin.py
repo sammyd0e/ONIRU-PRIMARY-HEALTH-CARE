@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.forms import ModelForm
+from django.core.exceptions import ValidationError
 from .models import User, SellerProfile, Address, PatientProfile, ChildAccount
 # Register PatientProfile for admin display
 @admin.register(PatientProfile)
@@ -9,7 +11,44 @@ class PatientProfileAdmin(admin.ModelAdmin):
     )
     search_fields = ('user__email', 'clinic_id', 'sex', 'blood_group', 'state_of_origin', 'next_of_kin')
     list_filter = ('sex', 'blood_group', 'state_of_origin')
-    readonly_fields = ('created_at', 'updated_at')
+    readonly_fields = ('created_at', 'updated_at', 'clinic_id')
+    fieldsets = (
+        ('User Link', {
+            'fields': ('user',)
+        }),
+        ('Personal Information', {
+            'fields': ('first_name', 'last_name', 'othername', 'sex', 'dob')
+        }),
+        ('Medical Information', {
+            'fields': ('blood_group', 'state_of_origin', 'next_of_kin', 'house_address')
+        }),
+        ('Vitals', {
+            'fields': ('blood_pressure', 'sugar_level', 'cholesterol_level', 'weight', 'height')
+        }),
+        ('Profile', {
+            'fields': ('profile_picture', 'clinic_id')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        """Override save to handle cascade constraints properly."""
+        try:
+            super().save_model(request, obj, form, change)
+        except Exception as e:
+            if 'FOREIGN KEY constraint failed' in str(e):
+                # If there's a FK constraint error, ensure user field is not being cleared
+                # when there's a related ChildAccount
+                if obj.user is None and hasattr(obj, 'parent_link'):
+                    from django.contrib.admin import SimpleListFilter
+                    raise ValueError(
+                        'Cannot clear the user field for a PatientProfile that is linked to a Child Account. '
+                        'Either delete the related Child Account first, or keep the user field populated.'
+                    )
+                raise
 
 @admin.register(User)
 class CustomerAdmin(UserAdmin):
@@ -56,6 +95,38 @@ class ChildAccountAdmin(admin.ModelAdmin):
     list_display = ('parent', 'child_profile', 'bloodgroup', 'created_at')
     search_fields = ('parent__email',)
     readonly_fields = ('created_at',)
+    fieldsets = (
+        ('Account Links', {
+            'fields': ('parent', 'child_profile')
+        }),
+        ('Medical Information', {
+            'fields': ('bloodgroup',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at',),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    def save_model(self, request, obj, form, change):
+        """Override save to ensure FK constraints are respected."""
+        try:
+            # Validate that child_profile has a user assigned
+            if obj.child_profile and not obj.child_profile.user:
+                raise ValidationError(
+                    'The child profile must have a user assigned before linking to a parent account.'
+                )
+            super().save_model(request, obj, form, change)
+        except ValidationError as e:
+            raise
+        except Exception as e:
+            if 'FOREIGN KEY constraint failed' in str(e):
+                raise ValidationError(
+                    f'Foreign key constraint error: {str(e)}. '
+                    f'This usually means the child profile is missing required relationships. '
+                    f'Please ensure the child profile has a user assigned.'
+                )
+            raise
 
 # UI-only labels: treat User as Patient (and SellerProfile as ProviderProfile)
 try:

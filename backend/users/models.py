@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
+from django.core.exceptions import ValidationError
 
 class CustomUserManager(BaseUserManager):
     """Custom user manager where email is the unique identifiers
@@ -194,6 +195,49 @@ class PatientProfile(models.Model):
             return f"PatientProfile: {self.user.email}"
         return "PatientProfile: No user"
 
+    def clean(self):
+        """Validate that user field is not being cleared if this profile is a child account."""
+        # Check if this PatientProfile is referenced by a ChildAccount
+        try:
+            if hasattr(self, 'parent_link') or self.parent_link:
+                if not self.user:
+                    raise ValidationError(
+                        _('Cannot clear the user field for a PatientProfile that is linked to a Child Account. '
+                          'The user field must always have a value when a Child Account references this profile.')
+                    )
+        except Exception as e:
+            # If parent_link doesn't exist or we can't check it, that's fine
+            if 'Cannot clear the user field' in str(e):
+                raise
+    
+    def save(self, *args, **kwargs):
+        """Override save to ensure FK constraints are respected."""
+        # Run full_clean to trigger validation including clean()
+        try:
+            self.full_clean()
+        except ValidationError:
+            raise
+        
+        # Additional check: if user is being set to None and there's a related ChildAccount
+        if self.pk:  # Only for updates
+            try:
+                from django.db import connection
+                cursor = connection.cursor()
+                cursor.execute(
+                    "SELECT COUNT(*) FROM child_account WHERE child_profile_id = %s",
+                    [self.pk]
+                )
+                has_child = cursor.fetchone()[0] > 0
+                if has_child and not self.user:
+                    raise ValidationError(
+                        _('Cannot clear the user field: this PatientProfile is linked to a Child Account.')
+                    )
+            except Exception as e:
+                if 'Cannot clear the user field' in str(e):
+                    raise
+        
+        super().save(*args, **kwargs)
+
 
 class ChildAccount(models.Model):
     parent = models.ForeignKey(User, on_delete=models.CASCADE, related_name='child_accounts')
@@ -218,6 +262,19 @@ class ChildAccount(models.Model):
         except Exception:
             child_email = 'None'
         return f"ChildAccount: parent={parent_email}, child={child_email}"
+    
+    def clean(self):
+        """Validate that child_profile has a user assigned."""
+        from django.core.exceptions import ValidationError
+        if self.child_profile and not self.child_profile.user:
+            raise ValidationError(
+                _('The child profile must have a user assigned before linking to a parent account.')
+            )
+    
+    def save(self, *args, **kwargs):
+        """Override save to ensure data consistency."""
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     # Move ChildAppointment model definition here
     class ChildAppointment(models.Model):
