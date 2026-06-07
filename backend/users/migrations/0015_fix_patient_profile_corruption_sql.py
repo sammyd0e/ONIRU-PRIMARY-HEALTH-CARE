@@ -13,9 +13,9 @@ class Migration(migrations.Migration):
         # First delete ChildAccounts that reference PatientProfiles with NULL user
         migrations.RunSQL(
             sql="""
-            DELETE FROM child_account 
+            DELETE FROM users_child_account 
             WHERE child_profile_id IN (
-                SELECT id FROM patient_profile WHERE user_id IS NULL
+                SELECT id FROM users_patient_profile WHERE user_id IS NULL
             );
             """,
             reverse_sql="-- This operation cannot be reversed as data is permanently deleted"
@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
         # Then delete PatientProfiles with NULL user
         migrations.RunSQL(
             sql="""
-            DELETE FROM patient_profile 
+            DELETE FROM users_patient_profile 
             WHERE user_id IS NULL;
             """,
             reverse_sql="-- This operation cannot be reversed as data is permanently deleted"
