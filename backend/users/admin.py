@@ -15,24 +15,30 @@ class PatientProfileForm(forms.ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         user = cleaned_data.get('user')
-        
-        # CRITICAL: user field is now required - don't allow NULL
+
         if user is None:
             raise ValidationError(
                 'The user field is required. PatientProfile must always be linked to a User. '
                 'If this is a corrupted record, please contact an administrator.'
             )
-        
-        # If we're editing an existing PatientProfile
+
         if self.instance.pk:
-            # Check if this PatientProfile has a related ChildAccount
-            has_child_account = ChildAccount.objects.filter(child_profile_id=self.instance.pk).exists()
-            if user is None and has_child_account:
+            original_user = getattr(self.instance, 'user', None)
+            if original_user and user and user.pk != original_user.pk:
                 raise ValidationError(
-                    'Cannot clear the user field: this PatientProfile is linked to a Child Account. '
-                    'Either delete the Child Account first or keep the user assigned.'
+                    'Changing the linked user is not allowed. Please create a new patient profile for a different user.'
                 )
-        
+
+            if not User.objects.filter(pk=user.pk).exists():
+                raise ValidationError('The selected user does not exist. Please choose a valid user account.')
+
+            has_child_account = ChildAccount.objects.filter(child_profile_id=self.instance.pk).exists()
+            if has_child_account and (user is None or (original_user and user.pk != original_user.pk)):
+                raise ValidationError(
+                    'Cannot change the user field because this PatientProfile is linked to a Child Account. '
+                    'Please preserve the existing user relationship.'
+                )
+
         return cleaned_data
 # Register PatientProfile for admin display
 @admin.register(PatientProfile)
@@ -43,7 +49,7 @@ class PatientProfileAdmin(admin.ModelAdmin):
     )
     search_fields = ('user__email', 'clinic_id', 'sex', 'blood_group', 'state_of_origin', 'next_of_kin')
     list_filter = ('sex', 'blood_group', 'state_of_origin')
-    readonly_fields = ('created_at', 'updated_at', 'clinic_id')
+    readonly_fields = ('user', 'created_at', 'updated_at', 'clinic_id')
     fieldsets = (
         ('User Link', {
             'fields': ('user',)

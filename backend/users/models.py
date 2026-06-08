@@ -197,15 +197,25 @@ class PatientProfile(models.Model):
         return "PatientProfile: No user"
 
     def clean(self):
-        """Validate that user field is not being cleared if this profile is a child account."""
-        # This validation is primarily handled by the admin form
-        # to avoid database queries during model save in transactions
-        pass
-    
+        """Validate that the PatientProfile user relationship is valid."""
+        if self.user_id is None:
+            raise ValidationError('PatientProfile must be linked to an existing User account.')
+
+        if not User.objects.filter(pk=self.user_id).exists():
+            raise ValidationError('The selected User account does not exist.')
+
+        if self.pk:
+            original = PatientProfile.objects.filter(pk=self.pk).first()
+            if original and original.user_id != self.user_id:
+                raise ValidationError('You cannot change the linked User for an existing PatientProfile.')
+
+            if ChildAccount.objects.filter(child_profile_id=self.pk).exists() and original and original.user_id != self.user_id:
+                raise ValidationError(
+                    'Cannot change the linked User because this PatientProfile is attached to a ChildAccount.'
+                )
+
     def save(self, *args, **kwargs):
-        """Override save to ensure FK constraints are respected."""
-        # Note: Full validation happens in the admin form (PatientProfileForm)
-        # We avoid database queries here to prevent transaction issues
+        self.full_clean()
         super().save(*args, **kwargs)
 
 
