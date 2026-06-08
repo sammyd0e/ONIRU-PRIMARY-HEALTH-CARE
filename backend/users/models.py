@@ -158,7 +158,10 @@ class PatientProfile(models.Model):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='patient_profile'
+        related_name='patient_profile',
+        null=False,
+        blank=False,
+        help_text='Required: Link to the User account for this patient'
     )
 
     sex = models.CharField(max_length=20, choices=SEX_CHOICES, blank=True, null=True)

@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.core.mail import send_mail
 from django.conf import settings
 from django.shortcuts import render
+from django.db import transaction
 from rest_framework import generics, status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.parsers import MultiPartParser, FormParser
@@ -62,6 +63,7 @@ class SignupView(APIView):
     def post(self, request):
         serializer = SignupSerializer(data=request.data)
         if not serializer.is_valid():
+            self.logger.warning('Signup validation failed: %s', serializer.errors)
             return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
         data = serializer.validated_data
@@ -69,116 +71,132 @@ class SignupView(APIView):
         log_data = {k: v for k, v in data.items() if k != 'password'}
         self.logger.info('Signup attempt: %s', log_data)
 
-        # Create a Django user if you use the default User model
-        User = get_user_model()
+        # Extract required fields
         email = data.get('email')
         first_name = data.get('first_name')
         last_name = data.get('last_name')
         othername = data.get('othername', '')
         password = data.get('password')
 
-        # Determine the user model's username field (could be 'username' or 'email' on custom models)
+        User = get_user_model()
         username_field = getattr(User, 'USERNAME_FIELD', 'username')
 
-        # Derive lookup value for uniqueness check and for create_user kwargs
-        # If the username field is 'email', use the submitted email; otherwise fall back to email
+        # Check uniqueness using the appropriate field
         lookup_field = 'email' if username_field == 'email' else username_field
         lookup_value = data.get(lookup_field) or email
 
-        # Check uniqueness using the appropriate field
         if User.objects.filter(**{lookup_field: lookup_value}).exists():
+            self.logger.warning('Signup failed: User with %s=%s already exists', lookup_field, lookup_value)
             return Response({'error': 'A user with that email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Build kwargs for create_user so we always pass the model's required username arg
-        create_kwargs = {'password': password, 'first_name': first_name, 'last_name': last_name}
-        create_kwargs[username_field] = lookup_value
-        # Ensure email is set on the model if it's a separate field
-        if username_field != 'email':
-            create_kwargs['email'] = email
+        # Use database transaction to ensure atomicity
+        try:
+            with transaction.atomic():
+                # Build kwargs for create_user
+                create_kwargs = {'password': password, 'first_name': first_name, 'last_name': last_name}
+                create_kwargs[username_field] = lookup_value
+                # Ensure email is set on the model if it's a separate field
+                if username_field != 'email':
+                    create_kwargs['email'] = email
 
-        # Create user - using create_user to hash password
-        user = User.objects.create_user(**create_kwargs)
-        
-        # Save phone number to user model
-        phone = data.get('phone')
-        if phone:
-            user.phone_number = phone
-            user.save()
+                # Create user - using create_user to hash password
+                user = User.objects.create_user(**create_kwargs)
+                self.logger.info('User created: id=%s email=%s', user.id, user.email)
+                
+                # Save phone number to user model
+                phone = data.get('phone')
+                if phone:
+                    user.phone_number = phone
+                    user.save()
+                    self.logger.info('Phone saved for user id=%s', user.id)
 
-        patient = PatientProfile.objects.create(
-            user=user,
-            first_name=first_name,
-            last_name=last_name,
-            othername=othername,
-            sex=data.get('sex'),
-            blood_group=data.get('bloodGroup'),
-            dob=data.get('dob'),
-            state_of_origin=data.get('stateOfOrigin'),
-            next_of_kin=data.get('nextOfKin'),
-            house_address=data.get('houseAddress'),
-        )
+                # Create patient profile with the same transaction
+                patient = PatientProfile.objects.create(
+                    user=user,
+                    first_name=first_name,
+                    last_name=last_name,
+                    othername=othername,
+                    sex=data.get('sex'),
+                    blood_group=data.get('bloodGroup'),
+                    dob=data.get('dob'),
+                    state_of_origin=data.get('stateOfOrigin'),
+                    next_of_kin=data.get('nextOfKin'),
+                    house_address=data.get('houseAddress'),
+                )
+                self.logger.info('PatientProfile created: id=%s user_id=%s', patient.id, user.id)
 
-        # Generate a unique 6-character alphanumeric clinic ID for this patient
-        def _generate_clinic_id(length=6):
-            chars = string.ascii_uppercase + string.digits
-            return ''.join(random.choices(chars, k=length))
+                # Generate a unique 6-character alphanumeric clinic ID for this patient
+                def _generate_clinic_id(length=6):
+                    chars = string.ascii_uppercase + string.digits
+                    return ''.join(random.choices(chars, k=length))
 
-        for _ in range(10):
-            candidate = _generate_clinic_id(6)
-            if not PatientProfile.objects.filter(clinic_id=candidate).exists():
-                patient.clinic_id = candidate
-                patient.save()
-                break
-        else:
-            # Fallback: use a longer ID if collisions prevented a 6-char unique value
-            candidate = _generate_clinic_id(10)
-            patient.clinic_id = candidate
-            patient.save()
+                for attempt in range(10):
+                    candidate = _generate_clinic_id(6)
+                    if not PatientProfile.objects.filter(clinic_id=candidate).exists():
+                        patient.clinic_id = candidate
+                        patient.save()
+                        self.logger.info('Clinic ID generated: %s for patient id=%s', candidate, patient.id)
+                        break
+                else:
+                    # Fallback: use a longer ID if collisions prevented a 6-char unique value
+                    candidate = _generate_clinic_id(10)
+                    patient.clinic_id = candidate
+                    patient.save()
+                    self.logger.warning('Using 10-char clinic ID fallback: %s for patient id=%s', candidate, patient.id)
 
-        # You can store extra fields on a profile model or user if extended.
-        safe_data = {k: v for k, v in data.items() if k != 'password'}
-        full_name = (patient.first_name or '') + (' ' + patient.othername if patient.othername else '') + (' ' + patient.last_name if patient.last_name else '')
-        response_payload = {
-            'success': True,
-            'user': {
-                'id': user.id,
-                'email': user.email,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-            },
-            'profile_id': patient.id,
-            'clinicId': patient.clinic_id,
-            'submitted': { 
-                'first_name': first_name,
-                'last_name': last_name,
-                'othername': othername,
-                'sex': data.get('sex'),
-                'bloodGroup': data.get('bloodGroup'),
-                'dob': data.get('dob'),
-                'stateOfOrigin': data.get('stateOfOrigin'),
-                'houseAddress': data.get('houseAddress'),
-                'nextOfKin': data.get('nextOfKin'),
-                'phone': data.get('phone'),
-                'email': data.get('email'),
-                'full_name': full_name.strip(),
-            },
-            'profile': {
-                'first_name': patient.first_name,
-                'last_name': patient.last_name,
-                'othername': patient.othername,
-                'phone': patient.phone if hasattr(patient, 'phone') else data.get('phone', ''),
-                'full_name': full_name.strip(),
-                'sex': patient.sex,
-                'bloodGroup': patient.blood_group,
-                'dob': patient.dob.isoformat() if patient.dob else None,
-                'stateOfOrigin': patient.state_of_origin,
-                'nextOfKin': patient.next_of_kin,
-                'houseAddress': patient.house_address,
-                'clinicId': patient.clinic_id,
-            },
-        }
-        self.logger.info('Signup success for email=%s user_id=%s profile_id=%s', user.email, user.id, patient.id)
-        return Response(response_payload, status=status.HTTP_201_CREATED)
+                # Build response payload
+                full_name = (patient.first_name or '') + (' ' + patient.othername if patient.othername else '') + (' ' + patient.last_name if patient.last_name else '')
+                response_payload = {
+                    'success': True,
+                    'user': {
+                        'id': user.id,
+                        'email': user.email,
+                        'first_name': user.first_name,
+                        'last_name': user.last_name,
+                    },
+                    'profile_id': patient.id,
+                    'clinicId': patient.clinic_id,
+                    'submitted': { 
+                        'first_name': first_name,
+                        'last_name': last_name,
+                        'othername': othername,
+                        'sex': data.get('sex'),
+                        'bloodGroup': data.get('bloodGroup'),
+                        'dob': data.get('dob'),
+                        'stateOfOrigin': data.get('stateOfOrigin'),
+                        'houseAddress': data.get('houseAddress'),
+                        'nextOfKin': data.get('nextOfKin'),
+                        'phone': data.get('phone'),
+                        'email': data.get('email'),
+                        'full_name': full_name.strip(),
+                    },
+                    'profile': {
+                        'first_name': patient.first_name,
+                        'last_name': patient.last_name,
+                        'othername': patient.othername,
+                        'phone': user.phone_number or data.get('phone', ''),
+                        'full_name': full_name.strip(),
+                        'sex': patient.sex,
+                        'bloodGroup': patient.blood_group,
+                        'dob': patient.dob.isoformat() if patient.dob else None,
+                        'stateOfOrigin': patient.state_of_origin,
+                        'nextOfKin': patient.next_of_kin,
+                        'houseAddress': patient.house_address,
+                        'clinicId': patient.clinic_id,
+                    },
+                }
+                self.logger.info('Signup success: email=%s user_id=%s profile_id=%s clinicId=%s', user.email, user.id, patient.id, patient.clinic_id)
+                return Response(response_payload, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            self.logger.error('Signup failed with exception: %s', str(e), exc_info=True)
+            # Return a safe error message to the client
+            error_msg = 'An error occurred during signup. Please try again.'
+            if 'FOREIGN KEY' in str(e).upper():
+                error_msg = 'Database error: Invalid data provided. Please contact support.'
+            elif 'UNIQUE' in str(e).upper():
+                error_msg = 'This email is already registered.'
+            return Response({'error': error_msg, 'detail': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 class MeView(APIView):

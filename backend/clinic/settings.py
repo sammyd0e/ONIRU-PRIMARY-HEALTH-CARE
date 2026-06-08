@@ -194,3 +194,8 @@ CORS_ALLOWED_ORIGINS = [
 
 # Use the custom user model defined in the users app
 AUTH_USER_MODEL = 'users.User'
+
+# Authentication backends - support both email and username authentication
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',  # Default Django authentication
+]

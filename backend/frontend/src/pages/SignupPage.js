@@ -20,7 +20,7 @@ export default function SignupPage() {
   });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [ , setLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
 
   const handleChange = e => {
@@ -51,14 +51,16 @@ export default function SignupPage() {
       return;
     }
     setError('');
+    setSuccess(false);
     setLoading(true);
+    
     // helper: read csrftoken cookie (Django's default)
     const getCookie = (name) => {
       const matches = document.cookie.match(new RegExp('(?:^|; )' + name.replace(/([.$?*|{}()[\]/+^])/g, '\\$1') + '=([^;]*)'));
       return matches ? decodeURIComponent(matches[1]) : undefined;
     };
 
-    // POST to backend signup endpoint. Using same-origin credentials and CSRF token.
+    // POST to backend signup endpoint
     (async () => {
       try {
         const res = await fetch(`${process.env.REACT_APP_API_BASE}/api/signup/`, {
@@ -70,8 +72,6 @@ export default function SignupPage() {
           credentials: 'same-origin',
           body: JSON.stringify(form),
         });
-
-        setLoading(false);
 
         if (res.ok) {
           // try to parse JSON but tolerate empty/non-json responses
@@ -95,13 +95,17 @@ export default function SignupPage() {
             // Not JSON — that's ok, we still consider the signup successful
             console.warn('Signup succeeded but response was not JSON', e);
           }
+          setLoading(false);
           setSuccess(true);
           // Redirect to the login page after successful signup
-          setTimeout(() => navigate('/login'), 800);
+          setTimeout(() => {
+            navigate('/login');
+          }, 1200);
           return;
         }
 
-        // Non-OK response: try to build a friendly message, but never render raw HTML
+        setLoading(false);
+        // Non-OK response: try to build a friendly message
         let msg = `Signup failed (status ${res.status})`;
         try {
           const ct = res.headers.get('content-type') || '';
@@ -114,7 +118,7 @@ export default function SignupPage() {
             else msg = JSON.stringify(data);
           } else {
             const text = await res.text();
-            // If the server returned HTML (Django error page / traceback), don't render it into the page.
+            // If the server returned HTML (Django error page), don't render it
             const looksLikeHtml = /<\/?[a-z][\s\S]*>/i.test(text) || text.trim().startsWith('<');
             if (looksLikeHtml) {
               console.error('Server returned HTML error response on signup:', text);
