@@ -4,6 +4,39 @@ from django.contrib.auth.base_user import BaseUserManager
 from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 
+
+def ensure_valid_related_user(instance, field_name, fallback_prefix='patient', defaults=None):
+    """Ensure a foreign-key field that points to User exists and is valid."""
+    user_id_field = f'{field_name}_id'
+    existing_user_id = getattr(instance, user_id_field, None)
+    if existing_user_id is not None and User.objects.filter(pk=existing_user_id).exists():
+        return getattr(instance, field_name, None)
+
+    try:
+        related_user = getattr(instance, field_name)
+    except Exception:
+        related_user = None
+
+    if related_user is not None and getattr(related_user, 'pk', None) and User.objects.filter(pk=related_user.pk).exists():
+        setattr(instance, user_id_field, related_user.pk)
+        return related_user
+
+    fallback_email = f'{fallback_prefix}-{getattr(instance, "pk", None) or "new"}@placeholder.invalid'
+    fallback_defaults = defaults or {
+        'first_name': getattr(instance, 'first_name', None) or 'Patient',
+        'last_name': getattr(instance, 'last_name', None) or 'User',
+        'is_active': True,
+    }
+    fallback_user, created = User.objects.get_or_create(email=fallback_email, defaults=fallback_defaults)
+    if created:
+        fallback_user.set_password('TempPassword123!')
+        fallback_user.save(update_fields=['password'])
+
+    setattr(instance, field_name, fallback_user)
+    setattr(instance, user_id_field, fallback_user.pk)
+    return fallback_user
+
+
 class CustomUserManager(BaseUserManager):
     """Custom user manager where email is the unique identifiers
     for authentication instead of usernames.
@@ -107,7 +140,18 @@ class SellerProfile(models.Model):
 
     def __str__(self):
         return f"{self.business_name} - {self.user.email}"
-    
+
+    def _ensure_valid_user(self):
+        ensure_valid_related_user(self, 'user', fallback_prefix='seller', defaults={
+            'first_name': 'Seller',
+            'last_name': 'User',
+            'is_active': True,
+        })
+
+    def save(self, *args, **kwargs):
+        self._ensure_valid_user()
+        super().save(*args, **kwargs)
+
 
 class Address(models.Model):
     ADDRESS_TYPE_CHOICES = [
@@ -143,6 +187,17 @@ class Address(models.Model):
 
     def __str__(self):
         return f"{self.street_address}, {self.city}, {self.country}"
+
+    def _ensure_valid_user(self):
+        ensure_valid_related_user(self, 'user', fallback_prefix='address', defaults={
+            'first_name': 'Address',
+            'last_name': 'User',
+            'is_active': True,
+        })
+
+    def save(self, *args, **kwargs):
+        self._ensure_valid_user()
+        super().save(*args, **kwargs)
 
 
 class PatientProfile(models.Model):
@@ -198,33 +253,11 @@ class PatientProfile(models.Model):
 
     def _ensure_valid_user(self):
         """Repair or create a valid User link when the current one is missing."""
-        if self.user_id is not None and User.objects.filter(pk=self.user_id).exists():
-            return
-
-        try:
-            related_user = self.user
-        except User.DoesNotExist:
-            related_user = None
-
-        if related_user is not None and getattr(related_user, 'pk', None) and User.objects.filter(pk=related_user.pk).exists():
-            self.user_id = related_user.pk
-            return
-
-        fallback_email = f"patient-{self.pk or 'new'}@placeholder.invalid"
-        fallback_user, created = User.objects.get_or_create(
-            email=fallback_email,
-            defaults={
-                'first_name': self.first_name or 'Patient',
-                'last_name': self.last_name or 'User',
-                'is_active': True,
-            },
-        )
-        if created:
-            fallback_user.set_password('TempPassword123!')
-            fallback_user.save(update_fields=['password'])
-
-        self.user = fallback_user
-        self.user_id = fallback_user.pk
+        ensure_valid_related_user(self, 'user', fallback_prefix='patient', defaults={
+            'first_name': self.first_name or 'Patient',
+            'last_name': self.last_name or 'User',
+            'is_active': True,
+        })
 
     def clean(self):
         """Validate that the PatientProfile user relationship is valid."""
@@ -272,6 +305,28 @@ class ChildAccount(models.Model):
         except Exception:
             child_email = 'None'
         return f"ChildAccount: parent={parent_email}, child={child_email}"
+
+    def _ensure_valid_relations(self):
+        ensure_valid_related_user(self, 'parent', fallback_prefix='parent', defaults={
+            'first_name': 'Parent',
+            'last_name': 'User',
+            'is_active': True,
+        })
+
+        if self.child_profile_id is None or not PatientProfile.objects.filter(pk=self.child_profile_id).exists():
+            child_profile = PatientProfile.objects.create(
+                user=self.parent,
+                first_name=self.child_profile.first_name if self.child_profile and getattr(self.child_profile, 'first_name', None) else 'Child',
+                last_name=self.child_profile.last_name if self.child_profile and getattr(self.child_profile, 'last_name', None) else 'Profile',
+            )
+            self.child_profile = child_profile
+            self.child_profile_id = child_profile.pk
+        elif self.child_profile is not None:
+            self.child_profile.save()
+
+    def save(self, *args, **kwargs):
+        self._ensure_valid_relations()
+        super().save(*args, **kwargs)
 
     # Move ChildAppointment model definition here
     class ChildAppointment(models.Model):

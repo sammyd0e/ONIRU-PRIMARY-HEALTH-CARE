@@ -6,6 +6,8 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 
+from users.models import ensure_valid_related_user
+
 # Model for patients attended by frontdesk staff
 class AttendedPatient(models.Model):
     name = models.CharField(max_length=255)
@@ -39,6 +41,14 @@ class Diagnosis(models.Model):
     def __str__(self):
         return f"Diagnosis: {self.label} ({self.date})"
 
+    def save(self, *args, **kwargs):
+        ensure_valid_related_user(self, 'user', fallback_prefix='patient', defaults={
+            'first_name': 'Patient',
+            'last_name': 'User',
+            'is_active': True,
+        })
+        super().save(*args, **kwargs)
+
 
 class TestResult(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='test_results')
@@ -56,6 +66,14 @@ class TestResult(models.Model):
     def __str__(self):
         return f"TestResult: {self.label} - {self.result} ({self.date})"
 
+    def save(self, *args, **kwargs):
+        ensure_valid_related_user(self, 'user', fallback_prefix='patient', defaults={
+            'first_name': 'Patient',
+            'last_name': 'User',
+            'is_active': True,
+        })
+        super().save(*args, **kwargs)
+
 
 class HealthRecord(models.Model):
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='health_records')
@@ -70,10 +88,14 @@ class HealthRecord(models.Model):
 
     def __str__(self):
         return f"HealthRecord: {self.label} ({self.date})"
-from django.db import models
-from django.conf import settings
-from django.utils import timezone
 
+    def save(self, *args, **kwargs):
+        ensure_valid_related_user(self, 'user', fallback_prefix='patient', defaults={
+            'first_name': 'Patient',
+            'last_name': 'User',
+            'is_active': True,
+        })
+        super().save(*args, **kwargs)
 from .models_arthnatal import ArthnatalBooking
 
 
@@ -111,6 +133,22 @@ class Appointment(models.Model):
     def __str__(self):
         return f"Appointment {self.order_number} for {self.patient_id}"
 
+    def save(self, *args, **kwargs):
+        ensure_valid_related_user(self, 'patient', fallback_prefix='patient', defaults={
+            'first_name': 'Patient',
+            'last_name': 'User',
+            'is_active': True,
+        })
+        if getattr(self, 'doctor_id', None) is not None and not self.doctor_id:
+            self.doctor_id = None
+        elif getattr(self, 'doctor_id', None) is not None:
+            ensure_valid_related_user(self, 'doctor', fallback_prefix='doctor', defaults={
+                'first_name': 'Doctor',
+                'last_name': 'User',
+                'is_active': True,
+            })
+        super().save(*args, **kwargs)
+
 
 class Doctor(models.Model):
     """Lightweight doctor registry used to list/select doctors in the booking UI.
@@ -129,6 +167,14 @@ class Doctor(models.Model):
 
     def __str__(self):
         return f"Doctor: {self.display_name} ({self.clinic_id})"
+
+    def save(self, *args, **kwargs):
+        ensure_valid_related_user(self, 'user', fallback_prefix='doctor', defaults={
+            'first_name': 'Doctor',
+            'last_name': 'User',
+            'is_active': True,
+        })
+        super().save(*args, **kwargs)
 
 
 # The following settings and frontend constant were accidentally placed in
