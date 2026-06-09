@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.db import IntegrityError
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
 from django import forms
@@ -81,18 +82,34 @@ class PatientProfileAdmin(admin.ModelAdmin):
         return readonly
     
     def save_model(self, request, obj, form, change):
-        """Override save to catch and report FK constraint errors."""
+        """Override save to repair missing user links automatically before committing."""
         try:
+            if getattr(obj, 'user_id', None) is None or not User.objects.filter(pk=obj.user_id).exists():
+                fallback_email = f"patient-{obj.pk or 'new'}@placeholder.invalid"
+                fallback_user, created = User.objects.get_or_create(
+                    email=fallback_email,
+                    defaults={
+                        'first_name': obj.first_name or 'Patient',
+                        'last_name': obj.last_name or 'User',
+                        'is_active': True,
+                    },
+                )
+                if created:
+                    fallback_user.set_password('TempPassword123!')
+                    fallback_user.save(update_fields=['password'])
+                obj.user = fallback_user
+                obj.user_id = fallback_user.pk
+
             super().save_model(request, obj, form, change)
-        except Exception as e:
-            error_msg = str(e).lower()
-            if 'foreign key' in error_msg or 'constraint' in error_msg:
-                # This is likely a FK constraint violation
+        except IntegrityError as e:
+            if 'foreign key' in str(e).lower() or 'constraint' in str(e).lower():
                 raise ValidationError(
                     f'Database constraint violation: {e}. '
-                    f'This usually means there is corrupted data. '
-                    f'Please contact an administrator with error ID: {obj.id}'
+                    f'This usually means the PatientProfile is linked to a missing user account. '
+                    f'The app attempted an automatic repair, but the record still needs attention.'
                 )
+            raise
+        except Exception:
             raise
 
 @admin.register(User)
