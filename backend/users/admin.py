@@ -7,6 +7,32 @@ from django import forms
 from .models import User, SellerProfile, Address, PatientProfile, ChildAccount
 
 
+def _delete_user_related_data(user):
+    """Remove dependent patient/child-account data before deleting a user."""
+    if user is None:
+        return
+
+    try:
+        ChildAccount.objects.filter(parent=user).delete()
+    except Exception:
+        pass
+
+    try:
+        PatientProfile.objects.filter(user=user).delete()
+    except Exception:
+        pass
+
+    try:
+        Address.objects.filter(user=user).delete()
+    except Exception:
+        pass
+
+    try:
+        SellerProfile.objects.filter(user=user).delete()
+    except Exception:
+        pass
+
+
 class PatientProfileForm(forms.ModelForm):
     """Custom form for PatientProfile that validates FK relationships."""
     class Meta:
@@ -112,10 +138,33 @@ class PatientProfileAdmin(admin.ModelAdmin):
         except Exception:
             raise
 
+    def delete_model(self, request, obj):
+        """Delete related child-account records before removing the profile."""
+        try:
+            ChildAccount.objects.filter(child_profile=obj).delete()
+        except Exception:
+            pass
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        """Delete each profile and its dependent child records safely."""
+        for obj in queryset:
+            self.delete_model(request, obj)
+
 @admin.register(User)
 class CustomerAdmin(UserAdmin):
     model = User
     list_display = ('email', 'first_name', 'last_name', 'is_seller', 'is_buyer','is_staff','is_active')
+
+    def delete_model(self, request, obj):
+        """Remove patient/child-account related data before deleting a user."""
+        _delete_user_related_data(obj)
+        super().delete_model(request, obj)
+
+    def delete_queryset(self, request, queryset):
+        """Delete each selected user after cleaning up dependent records."""
+        for obj in queryset:
+            self.delete_model(request, obj)
     list_filter = ('is_seller', 'is_buyer', 'is_staff', 'is_active')
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
