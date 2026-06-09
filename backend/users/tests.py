@@ -35,3 +35,26 @@ class ModelIntegrityRegressionTests(TestCase):
 
         self.assertTrue(appointment.patient_id)
         self.assertTrue(User.objects.filter(pk=appointment.patient_id).exists())
+
+    def test_appointment_repair_with_missing_doctor(self):
+        appointment = Appointment.objects.create(
+            order_number='TEST-1002',
+            patient=User.objects.create(email='patient-doctor@example.com', first_name='Patient', last_name='Doctor', is_active=True),
+            doctor_id=999999,
+            status='pending',
+            clinic_id='CLINIC2',
+        )
+
+        self.assertTrue(appointment.doctor_id)
+        self.assertTrue(User.objects.filter(pk=appointment.doctor_id).exists())
+
+    def test_appointment_repair_with_missing_child_account(self):
+        appointment = Appointment.objects.create(
+            order_number='TEST-1003',
+            patient=User.objects.create(email='patient-child@example.com', first_name='Patient', last_name='Child', is_active=True),
+            child_account_id=999999,
+            status='pending',
+            clinic_id='CLINIC3',
+        )
+
+        self.assertIsNone(appointment.child_account_id)

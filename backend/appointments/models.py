@@ -139,6 +139,7 @@ class Appointment(models.Model):
             'last_name': 'User',
             'is_active': True,
         })
+
         if getattr(self, 'doctor_id', None) is not None and not self.doctor_id:
             self.doctor_id = None
         elif getattr(self, 'doctor_id', None) is not None:
@@ -147,6 +148,13 @@ class Appointment(models.Model):
                 'last_name': 'User',
                 'is_active': True,
             })
+
+        if getattr(self, 'child_account_id', None) not in (None, ''):
+            from users.models import ChildAccount
+            if not ChildAccount.objects.filter(pk=self.child_account_id).exists():
+                self.child_account_id = None
+                self.child_account = None
+
         super().save(*args, **kwargs)
 
 
