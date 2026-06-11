@@ -1,10 +1,41 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import Group, Permission
 from django.db import IntegrityError
 from django.forms import ModelForm
 from django.core.exceptions import ValidationError
 from django import forms
 from .models import User, SellerProfile, Address, PatientProfile, ChildAccount
+
+
+def repair_user_related_integrity(user):
+    """Remove stale auth-related assignments that point to missing rows."""
+    if user is None or not getattr(user, 'pk', None):
+        return []
+
+    repaired = []
+
+    group_through = user.groups.through
+    invalid_group_ids = []
+    for relation in group_through.objects.filter(user_id=user.pk):
+        if not Group.objects.filter(pk=relation.group_id).exists():
+            invalid_group_ids.append(relation.group_id)
+
+    if invalid_group_ids:
+        deleted_count, _ = group_through.objects.filter(user_id=user.pk, group_id__in=invalid_group_ids).delete()
+        repaired.append(('groups', deleted_count))
+
+    permission_through = user.user_permissions.through
+    invalid_permission_ids = []
+    for relation in permission_through.objects.filter(user_id=user.pk):
+        if not Permission.objects.filter(pk=relation.permission_id).exists():
+            invalid_permission_ids.append(relation.permission_id)
+
+    if invalid_permission_ids:
+        deleted_count, _ = permission_through.objects.filter(user_id=user.pk, permission_id__in=invalid_permission_ids).delete()
+        repaired.append(('permissions', deleted_count))
+
+    return repaired
 
 
 def _delete_user_related_data(user):
@@ -155,6 +186,29 @@ class PatientProfileAdmin(admin.ModelAdmin):
 class CustomerAdmin(UserAdmin):
     model = User
     list_display = ('email', 'first_name', 'last_name', 'is_seller', 'is_buyer','is_staff','is_active')
+
+    def save_model(self, request, obj, form, change):
+        """Repair stale auth relations before saving a user from the admin."""
+        try:
+            repair_user_related_integrity(obj)
+            super().save_model(request, obj, form, change)
+        except IntegrityError as exc:
+            if 'foreign key' in str(exc).lower() or 'constraint' in str(exc).lower():
+                repair_user_related_integrity(obj)
+                super().save_model(request, obj, form, change)
+            else:
+                raise
+
+    def save_related(self, request, form, formsets, change):
+        """Clean stale user relations before admin saves related objects."""
+        try:
+            super().save_related(request, form, formsets, change)
+        except IntegrityError as exc:
+            if 'foreign key' in str(exc).lower() or 'constraint' in str(exc).lower():
+                repair_user_related_integrity(form.instance)
+                super().save_related(request, form, formsets, change)
+            else:
+                raise
 
     def delete_model(self, request, obj):
         """Remove patient/child-account related data before deleting a user."""

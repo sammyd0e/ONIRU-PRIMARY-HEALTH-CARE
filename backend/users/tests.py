@@ -1,6 +1,8 @@
+from django.db import connection
 from django.test import TestCase
 
 from appointments.models import Appointment
+from users.admin import repair_user_related_integrity
 from users.models import ChildAccount, PatientProfile, User
 
 
@@ -58,3 +60,14 @@ class ModelIntegrityRegressionTests(TestCase):
         )
 
         self.assertIsNone(appointment.child_account_id)
+
+    def test_repair_user_related_integrity_removes_invalid_group_assignments(self):
+        user = User.objects.create(email='admin-repair@example.com', first_name='Admin', last_name='Repair', is_active=True)
+
+        through_table = user.groups.through._meta.db_table
+        with connection.cursor() as cursor:
+            cursor.execute(f'INSERT INTO {through_table} (user_id, group_id) VALUES (%s, %s)', [user.pk, 999999])
+
+        repair_user_related_integrity(user)
+
+        self.assertFalse(user.groups.through.objects.filter(user_id=user.pk, group_id=999999).exists())
